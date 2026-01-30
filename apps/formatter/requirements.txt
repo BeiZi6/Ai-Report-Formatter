@@ -1,0 +1,5 @@
+streamlit
+python-docx
+markdown-it-py
+latex2mathml
+mathml2omml
