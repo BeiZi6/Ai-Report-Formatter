@@ -38,3 +38,21 @@ def test_body_paragraph_indent_and_alignment(tmp_path):
     assert paragraph.paragraph_format.first_line_indent == Pt(
         config.body_style.size_pt * 2
     )
+
+
+def test_build_docx_falls_back_on_style_failure(tmp_path, monkeypatch):
+    def _boom(*args, **kwargs):
+        raise RuntimeError("style write failed")
+
+    monkeypatch.setattr("formatter.docx_builder._apply_style_paragraph", _boom)
+
+    output = tmp_path / "out.docx"
+    config = FormatConfig()
+    build_docx([{"type": "paragraph", "text": "Hello"}], output, config)
+
+    doc = Document(output)
+    paragraph = doc.paragraphs[0]
+    assert paragraph.alignment == WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+    assert paragraph.paragraph_format.first_line_indent == Pt(
+        config.body_style.size_pt * 2
+    )
