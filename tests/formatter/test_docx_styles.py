@@ -1,4 +1,5 @@
 from docx import Document
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.shared import Cm, Pt
 
 from formatter.config import FormatConfig
@@ -24,3 +25,16 @@ def test_docx_styles_and_margins_applied(tmp_path):
 
     h1 = doc.styles["Heading 1"]
     assert h1.font.size == Pt(config.heading_styles[1].size_pt)
+
+
+def test_body_paragraph_indent_and_alignment(tmp_path):
+    config = FormatConfig()
+    output = tmp_path / "out.docx"
+    build_docx([{"type": "paragraph", "text": "Hello"}], output, config)
+
+    doc = Document(output)
+    paragraph = doc.paragraphs[0]
+    assert paragraph.alignment == WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+    assert paragraph.paragraph_format.first_line_indent == Pt(
+        config.body_style.size_pt * 2
+    )
