@@ -7,6 +7,7 @@ from latex2mathml.converter import convert as latex_to_mathml
 from mathml2omml import convert as mathml_to_omml
 
 MATHML_NS = "http://www.w3.org/1998/Math/MathML"
+OMML_NS = "http://schemas.openxmlformats.org/officeDocument/2006/math"
 ALIGNED_PATTERN = re.compile(
     r"\\begin\{(?P<env>aligned|align\*?)\}(?P<body>.*?)\\end\{(?P=env)\}",
     re.DOTALL,
@@ -71,6 +72,16 @@ def _convert_aligned_to_mathml(latex: str) -> str | None:
 def latex_to_omml(latex: str) -> str:
     aligned_mathml = _convert_aligned_to_mathml(latex)
     if aligned_mathml is not None:
-        return mathml_to_omml(aligned_mathml)
+        return _ensure_omml_namespace(mathml_to_omml(aligned_mathml))
     mathml = latex_to_mathml(latex)
-    return mathml_to_omml(mathml)
+    return _ensure_omml_namespace(mathml_to_omml(mathml))
+
+
+def _ensure_omml_namespace(omml: str) -> str:
+    if "xmlns:m=" in omml:
+        return omml
+    return omml.replace(
+        "<m:oMath",
+        f'<m:oMath xmlns:m="{OMML_NS}"',
+        1,
+    )
