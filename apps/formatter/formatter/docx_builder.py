@@ -59,6 +59,22 @@ def _add_math_run(paragraph, latex: str) -> None:
         run.text = latex
 
 
+def _add_equation_number(paragraph) -> None:
+    p_pr = paragraph._p.get_or_add_pPr()
+    tabs = OxmlElement("w:tabs")
+    tab = OxmlElement("w:tab")
+    tab.set(qn("w:val"), "right")
+    tab.set(qn("w:pos"), "9350")
+    tabs.append(tab)
+    p_pr.append(tabs)
+
+    paragraph.add_run("\t(")
+    fld = OxmlElement("w:fldSimple")
+    fld.set(qn("w:instr"), "SEQ Equation")
+    paragraph._p.append(fld)
+    paragraph.add_run(")")
+
+
 def _apply_run_styles(docx_run, run: dict) -> None:
     docx_run.bold = bool(run.get("bold"))
     docx_run.italic = bool(run.get("italic"))
@@ -233,5 +249,6 @@ def build_docx(ast: list[dict], output_path, config: FormatConfig | None = None)
         elif node.get("type") == "math_block":
             paragraph = doc.add_paragraph("")
             _add_math_run(paragraph, node.get("latex", ""))
+            _add_equation_number(paragraph)
 
     doc.save(output_path)

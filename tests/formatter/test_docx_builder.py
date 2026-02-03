@@ -261,3 +261,14 @@ def test_build_docx_renders_math(tmp_path):
     doc = Document(output)
     xml = doc.part._element.xml
     assert "oMath" in xml
+
+
+def test_math_block_adds_equation_number(tmp_path):
+    ast = [{"type": "math_block", "latex": "x"}]
+    output = tmp_path / "out.docx"
+    build_docx(ast, output, FormatConfig())
+
+    doc = Document(output)
+    paragraph = doc.paragraphs[0]
+    xml = paragraph._p.xml
+    assert "SEQ Equation" in xml
