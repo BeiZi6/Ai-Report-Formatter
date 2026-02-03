@@ -27,6 +27,14 @@ def _chars_to_pt(chars: int, font_size_pt: int) -> Pt:
     return Pt(chars * font_size_pt)
 
 
+LIST_INDENT_PT = 18
+
+
+def _apply_list_indents(paragraph, level: int) -> None:
+    paragraph.paragraph_format.left_indent = Pt(LIST_INDENT_PT * level)
+    paragraph.paragraph_format.first_line_indent = Pt(-LIST_INDENT_PT / 2)
+
+
 def _apply_style_paragraph(style, size_pt, line_spacing, before_lines, after_lines, align=None) -> None:
     style.font.size = Pt(size_pt)
     pf = style.paragraph_format
@@ -137,12 +145,13 @@ def _add_list(doc, node: dict, config: FormatConfig) -> None:
                 style_name = _list_style_name(node.get("ordered", False), node.get("level", 1))
                 paragraph = doc.add_paragraph("", style=style_name)
                 _add_runs(paragraph, child.get("runs", []), child.get("text", ""))
-                paragraph.paragraph_format.first_line_indent = Pt(0)
+                _apply_list_indents(paragraph, node.get("level", 1))
             elif child.get("type") == "list":
                 _add_list(doc, child, config)
             elif child.get("type") == "math_block":
                 paragraph = doc.add_paragraph("", style=_list_style_name(node.get("ordered", False), node.get("level", 1)))
                 _add_math_run(paragraph, child.get("latex", ""))
+                _apply_list_indents(paragraph, node.get("level", 1))
             elif child.get("type") == "table":
                 _add_table(doc, child)
 

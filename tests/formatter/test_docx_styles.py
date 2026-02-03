@@ -121,3 +121,34 @@ def test_docx_heading_color_is_black(tmp_path):
     doc = Document(output)
     h1 = doc.styles["Heading 1"]
     assert h1.font.color.rgb == RGBColor(0, 0, 0)
+
+
+def test_list_indents_and_numbering_levels(tmp_path):
+    ast = [
+        {
+            "type": "list",
+            "ordered": True,
+            "level": 1,
+            "start": 1,
+            "items": [
+                [{"type": "paragraph", "text": "第一项"}],
+                [
+                    {
+                        "type": "list",
+                        "ordered": True,
+                        "level": 2,
+                        "start": 1,
+                        "items": [[{"type": "paragraph", "text": "子项"}]],
+                    }
+                ],
+            ],
+        }
+    ]
+    output = tmp_path / "out.docx"
+    build_docx(ast, output, FormatConfig())
+
+    doc = Document(output)
+    first = doc.paragraphs[0]
+    nested = doc.paragraphs[1]
+    assert first.paragraph_format.left_indent == Pt(18)
+    assert nested.paragraph_format.left_indent == Pt(36)
