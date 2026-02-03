@@ -81,6 +81,12 @@ def _add_equation_number(paragraph) -> None:
     paragraph.add_run("\t(")
     fld = OxmlElement("w:fldSimple")
     fld.set(qn("w:instr"), "SEQ Equation")
+    fld.set(qn("w:dirty"), "true")
+    r = OxmlElement("w:r")
+    t = OxmlElement("w:t")
+    t.text = "1"
+    r.append(t)
+    fld.append(r)
     paragraph._p.append(fld)
     paragraph.add_run(")")
 
@@ -301,5 +307,6 @@ def build_docx(ast: list[dict], output_path, config: FormatConfig | None = None)
             paragraph = doc.add_paragraph("")
             _add_math_run(paragraph, node.get("latex", ""))
             _add_equation_number(paragraph)
+            paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
 
     doc.save(output_path)

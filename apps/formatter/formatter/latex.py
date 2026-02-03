@@ -30,7 +30,7 @@ def _column_align(count: int) -> str:
 
 def _latex_fragment_to_mathml(latex: str) -> str:
     if not latex:
-        return "<mrow/>"
+        return "<mrow><mo>&#x00A0;</mo></mrow>"
     try:
         return _extract_mathml_body(latex_to_mathml(latex))
     except Exception:
