@@ -86,12 +86,7 @@
     "win": {
       "icon": "electron/assets/icons/icon.ico",
       "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
+        "nsis"
       ]
     },
     "linux": {

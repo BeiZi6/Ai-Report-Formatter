@@ -15,12 +15,40 @@ concurrency:
 
 jobs:
   build:
-    name: Build (${{ matrix.os }})
+    name: Build (${{ matrix.id }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        include:
+          - id: mac-arm64
+            os: macos-14
+            python_arch: arm64
+            build_args: --mac --arm64
+          - id: mac-x64
+            os: macos-13
+            python_arch: x64
+            build_args: --mac --x64
+          - id: win-x64
+            os: windows-latest
+            python_arch: x64
+            build_args: --win --x64
+          - id: win-arm64
+            os: windows-11-arm
+            python_arch: arm64
+            build_args: --win --arm64
+          - id: win-ia32
+            os: windows-latest
+            python_arch: x86
+            build_args: --win --ia32
+          - id: linux-x64
+            os: ubuntu-latest
+            python_arch: x64
+            build_args: --linux --x64
+          - id: linux-arm64
+            os: ubuntu-24.04-arm
+            python_arch: arm64
+            build_args: --linux --arm64
 
     steps:
       - name: Checkout
@@ -37,6 +65,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          architecture: ${{ matrix.python_arch }}
 
       - name: Install Python desktop dependencies
         run: python -m pip install -r apps/api/requirements-desktop.txt
@@ -52,7 +81,7 @@ jobs:
       - name: Build desktop artifacts (no publish)
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         working-directory: apps/web
-        run: npm run build:desktop
+        run: npm run build:desktop -- ${{ matrix.build_args }}
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
@@ -63,7 +92,7 @@ jobs:
       - name: Build and publish desktop artifacts
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         working-directory: apps/web
-        run: npm run release:desktop
+        run: npm run release:desktop -- ${{ matrix.build_args }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
@@ -76,7 +105,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-${{ matrix.os }}
+          name: desktop-${{ matrix.id }}
           path: |
             apps/web/dist-electron/**/*.dmg
             apps/web/dist-electron/**/*.zip
