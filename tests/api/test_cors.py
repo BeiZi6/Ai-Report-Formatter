@@ -16,3 +16,18 @@ def test_cors_allows_loopback_origin():
 
     assert response.status_code == 200
     assert response.headers.get("access-control-allow-origin") == origin
+
+
+def test_cors_allows_file_origin_null():
+    client = TestClient(app)
+    origin = "null"
+    response = client.options(
+        "/api/preview",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == origin

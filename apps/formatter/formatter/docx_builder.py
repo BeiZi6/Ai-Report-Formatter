@@ -47,6 +47,18 @@ def _apply_style_paragraph(style, size_pt, line_spacing, before_lines, after_lin
         pf.alignment = align
 
 
+def _apply_paragraph_shading(paragraph, fill: str) -> None:
+    p_pr = paragraph._p.get_or_add_pPr()
+    existing = p_pr.find(qn("w:shd"))
+    if existing is not None:
+        p_pr.remove(existing)
+    shading = OxmlElement("w:shd")
+    shading.set(qn("w:val"), "clear")
+    shading.set(qn("w:color"), "auto")
+    shading.set(qn("w:fill"), fill)
+    p_pr.append(shading)
+
+
 def _add_page_number(section, position: str) -> None:
     footer = section.footer
     paragraph = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
@@ -69,25 +81,56 @@ def _add_math_run(paragraph, latex: str) -> None:
         run.text = latex
 
 
-def _add_equation_number(paragraph) -> None:
+def _apply_equation_tabs(paragraph, center_pos: int, right_pos: int) -> None:
     p_pr = paragraph._p.get_or_add_pPr()
+    existing = p_pr.find(qn("w:tabs"))
+    if existing is not None:
+        p_pr.remove(existing)
     tabs = OxmlElement("w:tabs")
-    tab = OxmlElement("w:tab")
-    tab.set(qn("w:val"), "right")
-    tab.set(qn("w:pos"), "9350")
-    tabs.append(tab)
+    center_tab = OxmlElement("w:tab")
+    center_tab.set(qn("w:val"), "center")
+    center_tab.set(qn("w:pos"), str(center_pos))
+    tabs.append(center_tab)
+    right_tab = OxmlElement("w:tab")
+    right_tab.set(qn("w:val"), "right")
+    right_tab.set(qn("w:pos"), str(right_pos))
+    tabs.append(right_tab)
     p_pr.append(tabs)
 
-    paragraph.add_run("\t(")
-    fld = OxmlElement("w:fldSimple")
-    fld.set(qn("w:instr"), "SEQ Equation")
-    fld.set(qn("w:dirty"), "true")
-    r = OxmlElement("w:r")
+
+def _append_field_char(paragraph, field_type: str, dirty: bool = False) -> None:
+    run = OxmlElement("w:r")
+    fld = OxmlElement("w:fldChar")
+    fld.set(qn("w:fldCharType"), field_type)
+    if dirty:
+        fld.set(qn("w:dirty"), "true")
+    run.append(fld)
+    paragraph._p.append(run)
+
+
+def _append_instr_text(paragraph, instruction: str) -> None:
+    run = OxmlElement("w:r")
+    instr = OxmlElement("w:instrText")
+    instr.text = instruction
+    run.append(instr)
+    paragraph._p.append(run)
+
+
+def _append_text_run(paragraph, text: str) -> None:
+    run = OxmlElement("w:r")
     t = OxmlElement("w:t")
-    t.text = "1"
-    r.append(t)
-    fld.append(r)
-    paragraph._p.append(fld)
+    t.text = text
+    run.append(t)
+    paragraph._p.append(run)
+
+
+def _add_equation_number_field(paragraph) -> None:
+    paragraph.add_run("(")
+    _append_field_char(paragraph, "begin", dirty=True)
+    _append_instr_text(paragraph, r"SEQ Equation \* ARABIC")
+    _append_field_char(paragraph, "separate")
+    _append_text_run(paragraph, "1")
+    _append_field_char(paragraph, "end")
     paragraph.add_run(")")
 
 
@@ -104,6 +147,8 @@ def _apply_run_styles(docx_run, run: dict) -> None:
         docx_run.font.subscript = True
     if run.get("code"):
         docx_run.font.name = "Consolas"
+        if not run.get("highlight"):
+            docx_run.font.highlight_color = WD_COLOR_INDEX.GRAY_25
 
 
 def _ensure_omml_namespace(omml: str) -> str:
@@ -138,6 +183,51 @@ def _add_runs(paragraph, runs: list[dict], fallback_text: str = "") -> None:
         _apply_run_styles(docx_run, run)
 
 
+def _trim_leading_text_runs(runs: list[dict]) -> list[dict]:
+    if not runs:
+        return runs
+    trimmed_runs: list[dict] = []
+    trimmed = False
+    for run in runs:
+        if run.get("type") == "math":
+            trimmed_runs.append(run)
+            continue
+        text = run.get("text", "")
+        if not trimmed:
+            stripped = text.lstrip()
+            if stripped:
+                if stripped != text:
+                    run = {**run, "text": stripped}
+                trimmed = True
+            else:
+                if not text:
+                    continue
+                continue
+        trimmed_runs.append(run)
+    return trimmed_runs
+
+
+def _add_code_block(doc, node: dict) -> None:
+    paragraph = doc.add_paragraph("")
+    paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+    paragraph.paragraph_format.first_line_indent = Pt(0)
+    paragraph.paragraph_format.left_indent = Cm(0.5)
+    paragraph.paragraph_format.right_indent = Cm(0.5)
+    paragraph.paragraph_format.line_spacing = 1.0
+    paragraph.paragraph_format.space_before = Pt(0)
+    paragraph.paragraph_format.space_after = Pt(0)
+    _apply_paragraph_shading(paragraph, "F2F2F2")
+
+    code_font = "Consolas"
+    lines = (node.get("text") or "").splitlines()
+    for idx, line in enumerate(lines):
+        if idx > 0:
+            paragraph.add_run().add_break()
+        run = paragraph.add_run(line)
+        run.font.name = code_font
+        run.font.size = Pt(10)
+
+
 def _list_style_name(ordered: bool, level: int) -> str:
     base = "List Number" if ordered else "List Bullet"
     if level <= 1:
@@ -146,7 +236,16 @@ def _list_style_name(ordered: bool, level: int) -> str:
     return f"{base} {level_suffix}"
 
 
-def _add_list(doc, node: dict, config: FormatConfig) -> None:
+def _add_math_block(paragraph, latex: str, center_tab: int, right_tab: int) -> None:
+    paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+    _apply_equation_tabs(paragraph, center_tab, right_tab)
+    paragraph.add_run("\t")
+    _add_math_run(paragraph, latex)
+    paragraph.add_run("\t")
+    _add_equation_number_field(paragraph)
+
+
+def _add_list(doc, node: dict, config: FormatConfig, center_tab: int, right_tab: int) -> None:
     for item in node.get("items", []):
         for child in item:
             if child.get("type") == "paragraph":
@@ -155,13 +254,15 @@ def _add_list(doc, node: dict, config: FormatConfig) -> None:
                 _add_runs(paragraph, child.get("runs", []), child.get("text", ""))
                 _apply_list_indents(paragraph, node.get("level", 1))
             elif child.get("type") == "list":
-                _add_list(doc, child, config)
+                _add_list(doc, child, config, center_tab, right_tab)
             elif child.get("type") == "math_block":
                 paragraph = doc.add_paragraph("", style=_list_style_name(node.get("ordered", False), node.get("level", 1)))
-                _add_math_run(paragraph, child.get("latex", ""))
+                _add_math_block(paragraph, child.get("latex", ""), center_tab, right_tab)
                 _apply_list_indents(paragraph, node.get("level", 1))
             elif child.get("type") == "table":
                 _add_table(doc, child)
+            elif child.get("type") == "code_block":
+                _add_code_block(doc, child)
 
 
 def _cell_alignment(align: str):
@@ -218,7 +319,6 @@ def _add_table(doc, node: dict) -> None:
     rows = node.get("rows", [])
     if not header:
         return
-    align = node.get("align", ["left"] * len(header))
     table = doc.add_table(rows=1 + len(rows), cols=len(header))
     # Avoid built-in styles that reintroduce vertical borders
     try:
@@ -233,8 +333,14 @@ def _add_table(doc, node: dict) -> None:
             cell_obj = table.cell(r_idx, c_idx)
             cell_obj.text = ""
             paragraph = cell_obj.paragraphs[0]
-            paragraph.alignment = _cell_alignment(align[c_idx] if c_idx < len(align) else "left")
-            _add_runs(paragraph, cell.get("runs", []), cell.get("text", ""))
+            runs = _trim_leading_text_runs(cell.get("runs", []))
+            fallback_text = (cell.get("text") or "").lstrip()
+            paragraph.paragraph_format.left_indent = Pt(0)
+            paragraph.paragraph_format.right_indent = Pt(0)
+            paragraph.paragraph_format.first_line_indent = Pt(0)
+            paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            _add_runs(paragraph, runs, fallback_text)
+            paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
         if r_idx == 0:
             _apply_header_bottom_border(table.rows[r_idx])
 
@@ -265,20 +371,24 @@ def build_docx(ast: list[dict], output_path, config: FormatConfig | None = None)
             config.body_style.para_after_lines,
             WD_PARAGRAPH_ALIGNMENT.JUSTIFY if config.body_style.justify else None,
         )
-        normal.paragraph_format.left_indent = _chars_to_pt(
-            config.body_style.indent_before_chars, config.body_style.size_pt
-        )
-        normal.paragraph_format.right_indent = _chars_to_pt(
-            config.body_style.indent_after_chars, config.body_style.size_pt
-        )
-        normal.paragraph_format.first_line_indent = _chars_to_pt(
-            config.body_style.first_line_indent_chars, config.body_style.size_pt
-        )
+        paragraph_format = getattr(normal, "paragraph_format", None)
+        if paragraph_format is not None:
+            paragraph_format.left_indent = _chars_to_pt(
+                config.body_style.indent_before_chars, config.body_style.size_pt
+            )
+            paragraph_format.right_indent = _chars_to_pt(
+                config.body_style.indent_after_chars, config.body_style.size_pt
+            )
+            paragraph_format.first_line_indent = _chars_to_pt(
+                config.body_style.first_line_indent_chars, config.body_style.size_pt
+            )
 
         for level, hstyle in config.heading_styles.items():
             h = doc.styles[f"Heading {level}"]
             _set_style_fonts(h, hstyle.en_font, hstyle.cn_font)
-            h.font.color.rgb = RGBColor(0, 0, 0)
+            font = getattr(h, "font", None)
+            if font is not None:
+                font.color.rgb = RGBColor(0, 0, 0)
             _apply_style_paragraph(
                 h,
                 hstyle.size_pt,
@@ -288,6 +398,17 @@ def build_docx(ast: list[dict], output_path, config: FormatConfig | None = None)
             )
     except Exception:
         pass
+
+    page_width = section.page_width
+    left_margin = section.left_margin
+    right_margin = section.right_margin
+    if page_width and left_margin and right_margin:
+        usable_width = page_width - left_margin - right_margin
+        right_tab = int(getattr(usable_width, "twips", 9350))
+        center_tab = int(right_tab / 2)
+    else:
+        right_tab = 9350
+        center_tab = 4675
 
     for node in ast:
         if node.get("type") == "heading":
@@ -308,13 +429,13 @@ def build_docx(ast: list[dict], output_path, config: FormatConfig | None = None)
                 config.body_style.first_line_indent_chars, config.body_style.size_pt
             )
         elif node.get("type") == "list":
-            _add_list(doc, node, config)
+            _add_list(doc, node, config, center_tab, right_tab)
         elif node.get("type") == "table":
             _add_table(doc, node)
         elif node.get("type") == "math_block":
             paragraph = doc.add_paragraph("")
-            _add_math_run(paragraph, node.get("latex", ""))
-            _add_equation_number(paragraph)
-            paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            _add_math_block(paragraph, node.get("latex", ""), center_tab, right_tab)
+        elif node.get("type") == "code_block":
+            _add_code_block(doc, node)
 
     doc.save(output_path)

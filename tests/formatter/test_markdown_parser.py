@@ -103,6 +103,30 @@ def test_parse_markdown_math_block():
     assert ast == [{"type": "math_block", "latex": "x"}]
 
 
+def test_parse_markdown_math_block_after_text_line():
+    ast = parse_markdown("块级公式:\n$$\n\\int_a^b f(x)\\,dx\n$$")
+    assert ast == [
+        {
+            "type": "paragraph",
+            "text": "块级公式:",
+            "runs": [run("块级公式:")],
+        },
+        {"type": "math_block", "latex": "\\int_a^b f(x)\\,dx"},
+    ]
+
+
+def test_parse_markdown_math_block_inline_double_dollars():
+    ast = parse_markdown("块级公式: $$\\int_a^b f(x)\\,dx$$")
+    assert ast == [
+        {
+            "type": "paragraph",
+            "text": "块级公式:",
+            "runs": [run("块级公式: ")],
+        },
+        {"type": "math_block", "latex": "\\int_a^b f(x)\\,dx"},
+    ]
+
+
 def test_parse_markdown_lists():
     ast = parse_markdown("- 第一项\n  - 嵌套子项\n- 第二项")
     assert ast[0]["type"] == "list"

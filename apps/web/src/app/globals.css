@@ -1,6 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:wght@400;700&display=swap");
 
 :root {
+  --font-display: "Press Start 2P";
+  --font-ui: "Space Mono";
   --bg-1: #f4f4f4;
   --bg-2: #ededed;
   --bg-3: #e7e7e7;
@@ -265,7 +267,7 @@ textarea {
 .hero {
   display: grid;
   gap: var(--space-sm);
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
 }
 
 .hero-badge {
@@ -312,7 +314,8 @@ textarea {
 
 .workspace {
   display: grid;
-  gap: var(--space-lg);
+  column-gap: var(--space-md);
+  row-gap: var(--space-lg);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -468,6 +471,7 @@ textarea {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: var(--space-sm);
+  align-items: start;
 }
 
 .action-row {
@@ -615,6 +619,114 @@ textarea {
 
 .preview-body ul {
   padding-left: 1.1rem;
+}
+
+.preview-html.preview-pages {
+  --preview-page-width: 794px;
+  --preview-page-height: 1123px;
+  --preview-page-padding: 72px;
+  --preview-scale: 1;
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: calc(var(--space-lg) * var(--preview-scale));
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  border: 2px dashed var(--border);
+  background: #f7f7f7;
+  max-height: 70vh;
+  min-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable both-edges;
+}
+
+.preview-page-shell {
+  width: calc(var(--preview-page-width) * var(--preview-scale));
+  height: calc(var(--preview-page-height) * var(--preview-scale));
+  display: flex;
+  justify-content: center;
+}
+
+.preview-page,
+.preview-page-measure {
+  width: var(--preview-page-width);
+  height: var(--preview-page-height);
+  background: #ffffff;
+  border: 2px solid var(--border);
+  box-shadow: 6px 6px 0 rgba(15, 15, 15, 0.08);
+}
+
+.preview-page {
+  transform: scale(var(--preview-scale));
+  transform-origin: top center;
+}
+
+.preview-page-content {
+  height: 100%;
+  padding: var(--preview-page-padding);
+  font-family: "Times New Roman", "SimSun", serif;
+  font-size: 12pt;
+  line-height: 1.6;
+  color: #111111;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.preview-page-content > * + * {
+  margin-top: 0.7rem;
+}
+
+.preview-page-content h1,
+.preview-page-content h2,
+.preview-page-content h3,
+.preview-page-content h4 {
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.preview-page-content ul,
+.preview-page-content ol {
+  padding-left: 1.4rem;
+}
+
+.preview-page-content table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.preview-page-content th,
+.preview-page-content td {
+  border: 1px solid #cfcfcf;
+  padding: 0.35rem 0.45rem;
+  text-align: center;
+  word-break: break-word;
+}
+
+.preview-page-content pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.preview-page-content code {
+  font-family: "Space Mono", "IBM Plex Mono", monospace;
+}
+
+.preview-page-content img,
+.preview-page-content svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.preview-measure {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .note-box {

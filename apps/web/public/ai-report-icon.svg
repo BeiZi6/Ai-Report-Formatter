@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">AI 报告排版助手图标</title>
+  <desc id="desc">文档与排版网格结合的应用图标，表达 Markdown 到 Word 的结构化转换。</desc>
+  <defs>
+    <linearGradient id="bg" x1="120" y1="80" x2="900" y2="920" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#133457" />
+      <stop offset="1" stop-color="#2F87D8" />
+    </linearGradient>
+    <linearGradient id="paper" x1="360" y1="220" x2="770" y2="820" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" />
+      <stop offset="1" stop-color="#EEF4FF" />
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="14" stdDeviation="22" flood-color="#0B1D33" flood-opacity="0.28" />
+    </filter>
+  </defs>
+
+  <rect x="72" y="72" width="880" height="880" rx="204" fill="url(#bg)" />
+
+  <g filter="url(#shadow)">
+    <path d="M332 196H666L772 302V828H332Z" fill="url(#paper)" />
+    <path d="M666 196V302H772" fill="#D8E8FF" />
+  </g>
+
+  <text x="392" y="424" fill="#1A4F88" font-size="176" font-family="'SF Pro Display','Segoe UI',sans-serif" font-weight="700">#</text>
+
+  <rect x="394" y="492" width="316" height="26" rx="13" fill="#C1D8F7" />
+  <rect x="394" y="548" width="286" height="26" rx="13" fill="#C1D8F7" />
+  <rect x="394" y="604" width="258" height="26" rx="13" fill="#C1D8F7" />
+
+  <g>
+    <circle cx="674" cy="676" r="94" fill="#0D4D87" opacity="0.95" />
+    <path d="M674 617L692 659L736 663L702 694L712 737L674 714L636 737L646 694L612 663L656 659Z" fill="#F9FBFF" />
+  </g>
+</svg>

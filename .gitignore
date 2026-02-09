@@ -12,3 +12,8 @@ node_modules/
 out/
 .env
 .env.local
+
+# Desktop build artifacts
+apps/api/.pyinstaller/
+apps/web/dist-electron/
+apps/web/electron/backend/

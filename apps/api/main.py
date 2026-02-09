@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import tempfile
 
 from fastapi import FastAPI, HTTPException
@@ -15,13 +16,32 @@ from .schemas import GenerateRequest, PreviewRequest
 
 app = FastAPI()
 
+default_allowed_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "null",
+]
+
+extra_origins = [
+    origin.strip()
+    for origin in os.getenv("API_CORS_EXTRA_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
+allowed_origins = list(dict.fromkeys([*default_allowed_origins, *extra_origins]))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/healthz")
+async def healthz() -> dict:
+    return {"status": "ok"}
 
 
 @app.post("/api/preview")

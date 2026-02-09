@@ -1,5 +1,5 @@
 from docx import Document
-from docx.enum.text import WD_COLOR_INDEX
+from docx.enum.text import WD_COLOR_INDEX, WD_ALIGN_PARAGRAPH
 
 from formatter.config import FormatConfig
 from formatter.docx_builder import build_docx
@@ -117,6 +117,33 @@ def test_build_docx_renders_inline_styles(tmp_path):
     assert runs[4].font.subscript is True
 
 
+def test_build_docx_renders_inline_code(tmp_path):
+    ast = [
+        {
+            "type": "paragraph",
+            "runs": [
+                {
+                    "text": "code",
+                    "bold": False,
+                    "italic": False,
+                    "strike": False,
+                    "highlight": False,
+                    "superscript": False,
+                    "subscript": False,
+                    "code": True,
+                }
+            ],
+        }
+    ]
+    output = tmp_path / "out.docx"
+    build_docx(ast, output, FormatConfig())
+
+    doc = Document(output)
+    run = doc.paragraphs[0].runs[0]
+    assert run.font.name == "Consolas"
+    assert run.font.highlight_color == WD_COLOR_INDEX.GRAY_25
+
+
 def test_build_docx_renders_lists(tmp_path):
     ast = [
         {
@@ -167,7 +194,9 @@ def test_build_docx_renders_lists(tmp_path):
     output = tmp_path / "out.docx"
     build_docx(ast, output, FormatConfig())
     doc = Document(output)
-    assert doc.paragraphs[0].style.name.startswith("List Bullet")
+    style = doc.paragraphs[0].style
+    assert style is not None
+    assert style.name and style.name.startswith("List Bullet")
 
 
 def test_build_docx_renders_tables(tmp_path):
@@ -272,6 +301,115 @@ def test_math_block_adds_equation_number(tmp_path):
     paragraph = doc.paragraphs[0]
     xml = paragraph._p.xml
     assert "SEQ Equation" in xml
+    assert "oMath" in xml
+
+
+def test_math_block_uses_complex_field_code(tmp_path):
+    ast = [{"type": "math_block", "latex": "x"}]
+    output = tmp_path / "out.docx"
+    build_docx(ast, output, FormatConfig())
+
+    doc = Document(output)
+    xml = doc.paragraphs[0]._p.xml
+    assert 'w:fldChar w:fldCharType="begin"' in xml
+    assert "w:instrText" in xml
+    assert "SEQ Equation" in xml
+    assert 'w:fldChar w:fldCharType="end"' in xml
+    assert "w:fldSimple" not in xml
+
+
+def test_math_blocks_number_increment(tmp_path):
+    ast = [
+        {"type": "math_block", "latex": "x"},
+        {"type": "math_block", "latex": "y"},
+    ]
+    output = tmp_path / "out.docx"
+    build_docx(ast, output, FormatConfig())
+
+    doc = Document(output)
+    xml = doc.part._element.xml
+    assert xml.count("SEQ Equation") == 2
+
+
+def test_math_block_in_list_keeps_numbering(tmp_path):
+    ast = [
+        {
+            "type": "list",
+            "ordered": False,
+            "level": 1,
+            "start": 1,
+            "items": [[{"type": "math_block", "latex": "a"}]],
+        }
+    ]
+    output = tmp_path / "out.docx"
+    build_docx(ast, output, FormatConfig())
+
+    doc = Document(output)
+    para = doc.paragraphs[0]
+    assert "SEQ Equation" in para._p.xml
+    assert "oMath" in para._p.xml
+
+
+def test_math_block_uses_center_and_right_tabs(tmp_path):
+    ast = [{"type": "math_block", "latex": "x"}]
+    output = tmp_path / "out.docx"
+    build_docx(ast, output, FormatConfig())
+
+    doc = Document(output)
+    xml = doc.paragraphs[0]._p.xml
+    assert 'w:tab w:val="center"' in xml
+    assert 'w:tab w:val="right"' in xml
+    assert "<w:tab/>" in xml
+    assert xml.find("<w:tab/>") < xml.find("oMath")
+
+
+def test_table_cells_are_center_aligned(tmp_path):
+    ast = {
+        "type": "table",
+        "align": ["left", "right"],
+        "header": [{"text": "H1"}, {"text": "H2"}],
+        "rows": [[{"text": "A"}, {"text": "B"}]],
+    }
+    output = tmp_path / "out.docx"
+    build_docx([ast], output, FormatConfig())
+
+    doc = Document(output)
+    table = doc.tables[0]
+    for row in table.rows:
+        for cell in row.cells:
+            assert cell.paragraphs[0].alignment == WD_ALIGN_PARAGRAPH.CENTER
+
+
+def test_table_cells_clear_first_line_indent(tmp_path):
+    ast = {
+        "type": "table",
+        "align": ["left"],
+        "header": [{"text": "H1"}],
+        "rows": [[{"text": "A"}]],
+    }
+    output = tmp_path / "out.docx"
+    build_docx([ast], output, FormatConfig())
+
+    doc = Document(output)
+    para = doc.tables[0].cell(0, 0).paragraphs[0]
+    xml = para._p.xml
+    assert 'w:firstLine="0"' in xml
+
+
+def test_table_cell_text_trims_leading_spaces(tmp_path):
+    ast = {
+        "type": "table",
+        "align": ["left"],
+        "header": [{"text": "H1", "runs": [{"text": "  H1", "code": False}]}],
+        "rows": [[{"text": "A", "runs": [{"text": "  A", "code": False}]}]],
+    }
+    output = tmp_path / "out.docx"
+    build_docx([ast], output, FormatConfig())
+
+    doc = Document(output)
+    table = doc.tables[0]
+    assert table.cell(0, 0).text == "H1"
+    assert table.cell(1, 0).text == "A"
 
 
 def test_table_uses_three_line_style(tmp_path):
