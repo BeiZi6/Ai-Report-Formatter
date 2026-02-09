@@ -5,7 +5,7 @@
   "author": "Xyu <hitxyshan@163.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/BeiZi6/Proj1.git"
+    "url": "https://github.com/BeiZi6/Ai-Report-Formatter.git"
   },
   "private": true,
   "main": "electron/main.mjs",

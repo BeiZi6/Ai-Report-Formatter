@@ -84,23 +84,29 @@ jobs:
         working-directory: apps/web
         run: npm run build:desktop -- ${{ matrix.build_args }}
         env:
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
 
-      - name: Build and publish desktop artifacts
+      - name: Build desktop artifacts for release
         if: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' }}
         working-directory: apps/web
-        run: npm run release:desktop -- ${{ matrix.build_args }}
+        run: npm run build:desktop -- ${{ matrix.build_args }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - name: Ensure GitHub release exists
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            exit 0
+          fi
+
+          gh release create "$TAG" --title "$TAG" --generate-notes || gh release view "$TAG" >/dev/null
 
       - name: Upload installer packages to GitHub release
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}

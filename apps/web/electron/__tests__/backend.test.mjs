@@ -20,7 +20,7 @@ test("uses resources backend path in packaged apps", () => {
 
 	assert.equal(
 		executablePath,
-		"/Applications/App.app/Contents/Resources/backend/api-server",
+		path.join("/Applications/App.app/Contents/Resources", "backend", "api-server"),
 	);
 });
 
