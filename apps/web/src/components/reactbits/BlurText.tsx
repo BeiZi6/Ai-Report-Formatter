@@ -103,7 +103,7 @@ export default function BlurText({
           duration: totalDuration,
           times,
           delay: (position * delay) / 1000,
-          ease: [0.16, 1, 0.3, 1],
+          ease: [0.16, 1, 0.3, 1] as const,
         };
 
         if (!canAnimate) {
