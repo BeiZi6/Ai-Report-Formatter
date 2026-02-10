@@ -28,6 +28,7 @@
     "@gsap/react": "^2.1.2",
     "framer-motion": "^12.30.0",
     "gsap": "^3.14.2",
+    "mathjs": "^14.9.1",
     "motion": "^12.34.0",
     "next": "16.1.6",
     "react": "19.2.3",
@@ -45,6 +46,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "playwright": "^1.58.1",
+    "shadcn": "^3.8.4",
     "typescript": "^5",
     "wait-on": "^9.0.3"
   },

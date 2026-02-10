@@ -9,6 +9,11 @@ type DesktopBridge = {
   }>;
 };
 
+export type BibliographyPayload = {
+  style: 'ieee' | 'gbt' | 'apa';
+  sources_text: string;
+};
+
 declare global {
   interface Window {
     desktop?: DesktopBridge;
@@ -49,7 +54,11 @@ function withTimeout(signal?: AbortSignal, timeoutMs = DEFAULT_TIMEOUT_MS) {
   } as const;
 }
 
-export async function fetchPreview(markdown: string, signal?: AbortSignal) {
+export async function fetchPreview(
+  markdown: string,
+  bibliography: BibliographyPayload,
+  signal?: AbortSignal,
+) {
   const apiBase = getApiBase();
   const { signal: mergedSignal, timedOut, cleanup } = withTimeout(signal);
 
@@ -57,7 +66,7 @@ export async function fetchPreview(markdown: string, signal?: AbortSignal) {
     const res = await fetch(`${apiBase}/api/preview`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ markdown }),
+      body: JSON.stringify({ markdown, bibliography }),
       signal: mergedSignal,
     });
 
@@ -79,6 +88,7 @@ export async function fetchPreview(markdown: string, signal?: AbortSignal) {
 export async function generateDocx(
   markdown: string,
   config: Record<string, unknown>,
+  bibliography: BibliographyPayload,
 ) {
   const apiBase = getApiBase();
   const { signal: mergedSignal, timedOut, cleanup } = withTimeout();
@@ -87,7 +97,7 @@ export async function generateDocx(
     const res = await fetch(`${apiBase}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ markdown, config }),
+      body: JSON.stringify({ markdown, config, bibliography }),
       signal: mergedSignal,
     });
 

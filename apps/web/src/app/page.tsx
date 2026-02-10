@@ -5,9 +5,12 @@ import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import { type CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
-import { AnimatedContent, BlurText, DecryptedText, GradualBlur, ShinyText, Squares } from "@/components/reactbits";
+import RegistryGradualBlur from "@/components/GradualBlur";
+import { AnimatedContent, BlurText, DecryptedText, Folder, ShinyText, Squares } from "@/components/reactbits";
+import { useTheme } from "@/components/theme/ThemeProvider";
 import ThemeSelector from "@/components/theme/ThemeSelector";
-import { fetchExportStats, fetchPreview, generateDocx } from "../lib/api";
+import type { ThemeId } from "@/lib/themes";
+import { fetchExportStats, fetchPreview, generateDocx, type BibliographyPayload } from "../lib/api";
 
 const GlitchText = dynamic(() => import("@/components/reactbits/GlitchText"), {
   ssr: false,
@@ -67,6 +70,8 @@ type FormatConfig = {
   justify: boolean;
   clear_background: boolean;
   page_num_position: string;
+  figure_max_width_cm: number;
+  figure_align: string;
 };
 
 const DEFAULT_CONFIG: FormatConfig = {
@@ -91,6 +96,8 @@ const DEFAULT_CONFIG: FormatConfig = {
   justify: true,
   clear_background: true,
   page_num_position: "center",
+  figure_max_width_cm: 14,
+  figure_align: "center",
 };
 
 const PREVIEW_PAGE_WIDTH = 794;
@@ -152,6 +159,45 @@ const valueCards: ValueCard[] = [
     metric: "Offline-ready",
   },
 ];
+
+const DITHER_PRIMARY_BY_THEME: Record<ThemeId, string> = {
+  dopamine: "rgba(255, 47, 125, 0.46)",
+  midnight: "rgba(70, 217, 255, 0.46)",
+  retro: "rgba(15, 15, 15, 0.44)",
+  aurora: "rgba(138, 77, 255, 0.46)",
+  sunset: "rgba(255, 106, 61, 0.46)",
+  ocean: "rgba(0, 168, 168, 0.45)",
+  ember: "rgba(255, 122, 47, 0.46)",
+  jade: "rgba(26, 163, 107, 0.45)",
+  graphite: "rgba(45, 214, 197, 0.46)",
+  mono: "rgba(17, 17, 17, 0.42)",
+};
+
+const DITHER_HOVER_BY_THEME: Record<ThemeId, string> = {
+  dopamine: "rgba(255, 131, 0, 0.3)",
+  midnight: "rgba(122, 125, 255, 0.3)",
+  retro: "rgba(15, 15, 15, 0.24)",
+  aurora: "rgba(34, 199, 255, 0.3)",
+  sunset: "rgba(255, 62, 138, 0.3)",
+  ocean: "rgba(0, 120, 255, 0.3)",
+  ember: "rgba(255, 47, 125, 0.28)",
+  jade: "rgba(31, 122, 224, 0.3)",
+  graphite: "rgba(70, 217, 255, 0.28)",
+  mono: "rgba(17, 17, 17, 0.22)",
+};
+
+const FOLDER_COLOR_BY_THEME: Record<ThemeId, string> = {
+  dopamine: "#FF2F7D",
+  midnight: "#46D9FF",
+  retro: "#0F0F0F",
+  aurora: "#8A4DFF",
+  sunset: "#FF6A3D",
+  ocean: "#00A8A8",
+  ember: "#FF7A2F",
+  jade: "#1AA36B",
+  graphite: "#2DD6C5",
+  mono: "#111111",
+};
 
 function WaveRibbon({ status, onGenerate, disabled }: WaveRibbonProps) {
   return (
@@ -239,6 +285,7 @@ const createMeasurePage = (host: HTMLDivElement): MeasurePage => {
 };
 
 export default function Home() {
+  const { theme } = useTheme();
   const [markdown, setMarkdown] = useState("");
   const [preview, setPreview] = useState<PreviewPayload | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -246,13 +293,18 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [exportStats, setExportStats] = useState<ExportStats | null>(null);
   const [config, setConfig] = useState<FormatConfig>(DEFAULT_CONFIG);
+  const [bibliographyStyle, setBibliographyStyle] = useState<BibliographyPayload["style"]>("ieee");
+  const [bibliographySources, setBibliographySources] = useState("");
   const [previewPages, setPreviewPages] = useState<string[]>([]);
   const [previewScale, setPreviewScale] = useState(1);
   const [hasDesktopLogExport, setHasDesktopLogExport] = useState(false);
   const [logExportMessage, setLogExportMessage] = useState<string | null>(null);
   const [importMessage, setImportMessage] = useState<string | null>(null);
+  const [isImportFolderOpen, setIsImportFolderOpen] = useState(false);
+  const [selectedImportFileName, setSelectedImportFileName] = useState("未选择任何文件");
   const [batchMessage, setBatchMessage] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
   const previewMeasureRef = useRef<HTMLDivElement | null>(null);
   const previewViewportRef = useRef<HTMLDivElement | null>(null);
   const fontSizeOptions = [
@@ -263,6 +315,13 @@ export default function Home() {
     { label: "二号 (22pt)", value: 22 },
   ];
   const lineSpacingOptions = [1, 1.25, 1.5, 1.75, 2];
+  const bibliographyPayload = useMemo<BibliographyPayload>(
+    () => ({
+      style: bibliographyStyle,
+      sources_text: bibliographySources,
+    }),
+    [bibliographyStyle, bibliographySources],
+  );
 
   const isEmpty = markdown.trim().length === 0;
 
@@ -299,7 +358,7 @@ export default function Home() {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await fetchPreview(markdown, controller.signal);
+        const data = await fetchPreview(markdown, bibliographyPayload, controller.signal);
         setPreview(data);
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") {
@@ -315,7 +374,7 @@ export default function Home() {
       window.clearTimeout(handle);
       controller.abort();
     };
-  }, [markdown, isEmpty]);
+  }, [bibliographyPayload, markdown, isEmpty]);
 
   useEffect(() => {
     const viewport = previewViewportRef.current;
@@ -404,12 +463,36 @@ export default function Home() {
     return "已更新";
   }, [error, isEmpty, isGenerating, isLoading]);
 
+  const ditherPrimaryColor = DITHER_PRIMARY_BY_THEME[theme];
+  const ditherHoverColor = DITHER_HOVER_BY_THEME[theme];
+
+  const handleOpenImportPicker = useCallback(() => {
+    setIsImportFolderOpen(true);
+
+    if (typeof window !== "undefined") {
+      const fallbackCloseHandle = window.setTimeout(() => {
+        setIsImportFolderOpen(false);
+      }, 480);
+
+      const handleRefocus = () => {
+        window.clearTimeout(fallbackCloseHandle);
+        window.setTimeout(() => {
+          setIsImportFolderOpen(false);
+        }, 80);
+      };
+
+      window.addEventListener("focus", handleRefocus, { once: true });
+    }
+
+    importInputRef.current?.click();
+  }, []);
+
   const handleGenerate = async () => {
     if (isEmpty || isGenerating) return;
     setIsGenerating(true);
     setError(null);
     try {
-      const blob = await generateDocx(markdown, config);
+      const blob = await generateDocx(markdown, config, bibliographyPayload);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -458,10 +541,13 @@ export default function Home() {
     const file = event.target.files?.[0];
     // Allow importing the same file repeatedly.
     event.target.value = "";
+    setIsImportFolderOpen(false);
 
     if (!file) {
       return;
     }
+
+    setSelectedImportFileName(file.name);
 
     try {
       const text = await file.text();
@@ -472,7 +558,7 @@ export default function Home() {
     }
   };
 
-  const handleMarkdownDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleMarkdownDragOver = (event: React.DragEvent<HTMLTextAreaElement>) => {
     event.preventDefault();
     setIsDragOver(true);
   };
@@ -481,14 +567,17 @@ export default function Home() {
     setIsDragOver(false);
   };
 
-  const handleMarkdownDrop = async (event: React.DragEvent<HTMLDivElement>) => {
+  const handleMarkdownDrop = async (event: React.DragEvent<HTMLTextAreaElement>) => {
     event.preventDefault();
     setIsDragOver(false);
+    setIsImportFolderOpen(false);
 
     const file = event.dataTransfer.files?.[0];
     if (!file) {
       return;
     }
+
+    setSelectedImportFileName(file.name);
 
     if (!file.name.toLowerCase().endsWith(".md")) {
       setImportMessage("仅支持 .md 文件拖拽导入");
@@ -518,7 +607,7 @@ export default function Home() {
     try {
       for (let i = 0; i < parts.length; i += 1) {
         // Reuse the current config for each document.
-        const blob = await generateDocx(parts[i], config);
+        const blob = await generateDocx(parts[i], config, bibliographyPayload);
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
@@ -540,14 +629,31 @@ export default function Home() {
       <div className="bg-squares-layer" data-testid="rb-bg-squares" aria-hidden="true">
         <Squares
           direction="right"
-          speed={0.2}
+          speed={0.3}
           gravity={0.45}
           squareSize={64}
-          borderColor="rgba(153, 107, 255, 0.28)"
-          hoverFillColor="rgba(255, 214, 74, 0.2)"
+          borderColor={ditherPrimaryColor}
+          hoverFillColor={ditherHoverColor}
         />
       </div>
       <div className="page" data-ui-glass="fluid">
+        <div
+          data-gradual-blur="true"
+          data-gradual-blur-scope="global"
+          data-gradual-provider="react-bits-shadcn"
+          aria-hidden="true"
+        >
+          <RegistryGradualBlur
+            target="page"
+            position="bottom"
+            height="5.5rem"
+            strength={0.55}
+            divCount={4}
+            opacity={0.56}
+            zIndex={8}
+            className="gradual-blur-global"
+          />
+        </div>
       <a className="skip-link" href="#main-content">
         跳到主要内容
       </a>
@@ -610,7 +716,6 @@ export default function Home() {
         animate="visible"
         custom={0.1}
       >
-        <GradualBlur className="gradual-blur-wrap" maxBlur={6} maxOffset={10} minOpacity={0.86}>
         <motion.section className="panel" variants={fadeUp} custom={0.2}>
           <div className="panel-header">
             <div>
@@ -639,13 +744,57 @@ export default function Home() {
 
           <div className="field">
             <label htmlFor="markdown-import">从文件导入</label>
-            <input
-              id="markdown-import"
-              type="file"
-              accept=".md,text/markdown"
-              onChange={handleImportMarkdownFile}
-            />
-            {importMessage ? <p className="hint">{importMessage}</p> : null}
+            <div className="file-import-shell">
+              <input
+                id="markdown-import"
+                ref={importInputRef}
+                className="file-import-input"
+                type="file"
+                accept=".md,text/markdown"
+                onChange={handleImportMarkdownFile}
+              />
+              <div className="file-import-row">
+                <div className="file-import-folder-slot">
+                  <Folder
+                    className="file-import-folder"
+                    color={FOLDER_COLOR_BY_THEME[theme]}
+                    size={0.28}
+                    ariaLabel="选择 Markdown 文件"
+                    open={isImportFolderOpen}
+                    onOpenChange={setIsImportFolderOpen}
+                    onAction={handleOpenImportPicker}
+                    items={[
+                      <span key="paper-md" className="file-import-paper-item">
+                        .md
+                      </span>,
+                      <span key="paper-markdown" className="file-import-paper-item">
+                        markdown
+                      </span>,
+                      <span key="paper-text" className="file-import-paper-item">
+                        text
+                      </span>,
+                    ]}
+                  />
+                </div>
+                <div className="file-import-meta">
+                  <p className="file-import-name" title={selectedImportFileName}>
+                    {selectedImportFileName}
+                  </p>
+                  <p className="file-import-caption">点击左侧文件夹即可选择文件，导入会覆盖当前编辑区。</p>
+                </div>
+              </div>
+            </div>
+            {importMessage ? (
+              <p
+                className={
+                  importMessage.startsWith("已导入")
+                    ? "hint file-import-feedback is-success"
+                    : "hint file-import-feedback is-error"
+                }
+              >
+                {importMessage}
+              </p>
+            ) : null}
             <p className="hint">提示：批量导出可用一行 `---` 分隔多份文档</p>
           </div>
 
@@ -1017,6 +1166,85 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
+            <div className="setting-card">
+              <div className="setting-card-head">
+                <div>
+                  <p className="panel-kicker">图片与文献</p>
+                  <h3>Figure & Bibliography</h3>
+                </div>
+                <span className="chip">导出一致性</span>
+              </div>
+              <div className="setting-grid">
+                <div className="field compact">
+                  <label htmlFor="figure-width-cm">图片宽度 (cm)</label>
+                  <input
+                    id="figure-width-cm"
+                    name="figure-width-cm"
+                    type="number"
+                    min={4}
+                    max={18}
+                    step={0.5}
+                    value={config.figure_max_width_cm}
+                    onChange={(event) => {
+                      const nextValue = event.target.valueAsNumber;
+                      setConfig((prev) => ({
+                        ...prev,
+                        figure_max_width_cm: Number.isNaN(nextValue) ? 14 : nextValue,
+                      }));
+                    }}
+                  />
+                  <p className="hint">范围建议：4-18 cm</p>
+                </div>
+                <div className="field compact">
+                  <label htmlFor="figure-align">图片对齐</label>
+                  <select
+                    id="figure-align"
+                    name="figure-align"
+                    value={config.figure_align}
+                    onChange={(event) =>
+                      setConfig((prev) => ({
+                        ...prev,
+                        figure_align: event.target.value,
+                      }))
+                    }
+                  >
+                    <option value="left">左对齐</option>
+                    <option value="center">居中</option>
+                    <option value="right">右对齐</option>
+                  </select>
+                </div>
+                <div className="field compact">
+                  <label htmlFor="bibliography-style">参考文献样式</label>
+                  <select
+                    id="bibliography-style"
+                    name="bibliography-style"
+                    value={bibliographyStyle}
+                    onChange={(event) => setBibliographyStyle(event.target.value as BibliographyPayload["style"])}
+                  >
+                    <option value="ieee">IEEE</option>
+                    <option value="gbt">GB/T</option>
+                    <option value="apa">APA</option>
+                  </select>
+                </div>
+                <div className="field" style={{ gridColumn: "1 / -1" }}>
+                  <label htmlFor="bibliography-sources">文献源管理</label>
+                  <textarea
+                    id="bibliography-sources"
+                    name="bibliography-sources"
+                    rows={6}
+                    value={bibliographySources}
+                    onChange={(event) => setBibliographySources(event.target.value)}
+                    placeholder={[
+                      "[1] 王某某. 报告写作方法.",
+                      "@article{smith2024, author={Smith, John}, title={A Practical Study}, journal={Journal}, year={2024}}",
+                    ].join("\n")}
+                    style={{ minHeight: "128px" }}
+                  />
+                  <p className="hint">支持手工条目（[编号] 内容）与 BibTeX（@article(...)）混合录入。</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="action-row">
@@ -1052,9 +1280,7 @@ export default function Home() {
 
           {error ? <p className="error-text">{error}</p> : null}
         </motion.section>
-	      </GradualBlur>
 
-	      <GradualBlur className="gradual-blur-wrap" maxBlur={5} maxOffset={8} minOpacity={0.88}>
         <motion.section className="panel preview-panel" variants={fadeUp} custom={0.3}>
           <div className="panel-header">
             <div>
@@ -1186,7 +1412,6 @@ export default function Home() {
               {logExportMessage ? <p className="hint">{logExportMessage}</p> : null}
             </div>
         </motion.section>
-      </GradualBlur>
       </motion.main>
 
       <footer className="page-footer">

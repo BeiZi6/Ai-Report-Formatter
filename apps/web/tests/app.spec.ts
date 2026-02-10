@@ -47,6 +47,47 @@ test('preview renders inline code and centered tables', async ({ page }) => {
   await expect(preview.locator('td').first()).toHaveCSS('text-align', 'center');
 });
 
+test('settings panel includes image and bibliography manager controls', async ({ page }) => {
+  await page.goto('http://localhost:3000/');
+  await expect(page.getByLabel('图片宽度 (cm)')).toBeVisible();
+  await expect(page.getByLabel('图片对齐')).toBeVisible();
+  await expect(page.getByLabel('参考文献样式')).toBeVisible();
+  await expect(page.getByLabel('文献源管理')).toBeVisible();
+});
+
+test('preview request includes bibliography manager payload', async ({ page }) => {
+  test.setTimeout(60_000);
+  let lastPreviewPayload: Record<string, unknown> | null = null;
+
+  await page.route('**/api/preview', async (route) => {
+    const postData = route.request().postData() ?? '{}';
+    lastPreviewPayload = JSON.parse(postData) as Record<string, unknown>;
+    await route.fulfill({
+      json: {
+        summary: { headings: 0, paragraphs: 1 },
+        refs: ['[1]'],
+        preview_html: '<p>ok</p>',
+      },
+    });
+  });
+
+  await page.goto('http://localhost:3000/');
+  await page.getByLabel('Markdown 输入').fill('See [@smith2024].');
+  await page.getByLabel('参考文献样式').selectOption('apa');
+  await page.getByLabel('文献源管理').fill('[smith2024] Smith, J. (2024).');
+
+  await expect.poll(() => {
+    if (!lastPreviewPayload) {
+      return null;
+    }
+    const bibliography = lastPreviewPayload['bibliography'] as Record<string, unknown> | undefined;
+    return bibliography?.['style'] ?? null;
+  }).toBe('apa');
+
+  const bibliography = (lastPreviewPayload?.['bibliography'] as Record<string, unknown>) ?? {};
+  expect(bibliography['sources_text']).toContain('smith2024');
+});
+
 test('long preview paginates into multiple pages', async ({ page }) => {
   const paragraphs = Array.from({ length: 80 }, (_, index) => {
     const content = '内容 '.repeat(18);

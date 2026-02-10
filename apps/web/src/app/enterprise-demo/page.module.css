@@ -1,0 +1,304 @@
+.viewport {
+  --viewport-bg: color-mix(in srgb, var(--bg-1) 74%, #ffffff 26%);
+  --viewport-panel: color-mix(in srgb, var(--bg-2) 68%, #ffffff 32%);
+  --viewport-ink: var(--text-primary);
+  --viewport-muted: var(--text-secondary);
+  --viewport-line: var(--module-surface-outline, color-mix(in srgb, var(--border-soft) 76%, transparent));
+  --viewport-accent: var(--accent);
+  --viewport-radius: var(--theme-card-radius, 14px);
+  --viewport-shadow: var(--module-enterprise-shadow, 0 24px 44px rgba(17, 38, 63, 0.12));
+
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  background:
+    radial-gradient(
+      circle at 90% 0%,
+      color-mix(in srgb, var(--viewport-accent) 22%, transparent),
+      transparent 34%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-1) 88%, #ffffff 12%) 0%,
+      var(--viewport-bg) 55%
+    );
+  color: var(--viewport-ink);
+}
+
+.shell {
+  max-width: 1024px;
+  margin: 0 auto;
+  background: var(--viewport-panel);
+  border: 1px solid var(--viewport-line);
+  border-radius: calc(var(--viewport-radius) + 6px);
+  box-shadow: var(--viewport-shadow);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.05rem 1.5rem;
+  border-bottom: 1px solid var(--viewport-line);
+  background: color-mix(in srgb, var(--viewport-panel) 88%, #ffffff 12%);
+  backdrop-filter: blur(4px);
+}
+
+.brand {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.nav a {
+  font-size: 0.9rem;
+  color: var(--viewport-muted);
+  transition: color 180ms ease;
+}
+
+.nav a:hover {
+  color: var(--viewport-ink);
+}
+
+.main {
+  display: grid;
+  gap: 2.3rem;
+  padding: 2rem 1.5rem 2.4rem;
+}
+
+.hero {
+  display: grid;
+  gap: 0.85rem;
+  max-width: 700px;
+  animation: rise 520ms ease-out;
+}
+
+.kicker {
+  width: fit-content;
+  border: 1px solid var(--viewport-line);
+  border-radius: 999px;
+  padding: 0.28rem 0.72rem;
+  background: color-mix(in srgb, var(--viewport-accent) 12%, #ffffff 88%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--viewport-accent) 70%, var(--viewport-ink) 30%);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 1.3rem + 1.9vw, 2.8rem);
+  line-height: 1.15;
+}
+
+.hero p {
+  margin: 0;
+  color: var(--viewport-muted);
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.actions button,
+.actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  padding: 0.62rem 1.1rem;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.actions button {
+  background:
+    linear-gradient(
+      130deg,
+      color-mix(in srgb, var(--viewport-accent) 78%, #ffffff 22%) 0%,
+      var(--viewport-accent) 56%,
+      var(--accent-strong) 100%
+    );
+  color: #f8fbff;
+  box-shadow: 0 10px 18px color-mix(in srgb, var(--viewport-accent) 32%, transparent);
+}
+
+.actions a {
+  border-color: var(--viewport-line);
+  color: var(--viewport-ink);
+  background: color-mix(in srgb, var(--viewport-panel) 80%, #ffffff 20%);
+}
+
+.actions button:hover,
+.actions a:hover {
+  transform: translateY(-1px);
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.metricCard {
+  border: 1px solid var(--viewport-line);
+  border-radius: var(--viewport-radius);
+  padding: 1rem;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--viewport-panel) 92%, #ffffff 8%) 0%,
+      color-mix(in srgb, var(--viewport-panel) 74%, var(--viewport-bg) 26%) 100%
+    );
+}
+
+.metricCard p,
+.metricCard span {
+  margin: 0;
+  color: var(--viewport-muted);
+  font-size: 0.85rem;
+}
+
+.metricCard strong {
+  display: block;
+  margin: 0.35rem 0;
+  font-size: 1.5rem;
+}
+
+.features {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.sectionHead {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.sectionHead h2,
+.cta h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.sectionHead p,
+.featureCard p,
+.cta p {
+  margin: 0;
+  color: var(--viewport-muted);
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.featureCard {
+  border-radius: var(--viewport-radius);
+  border: 1px solid var(--viewport-line);
+  padding: 1rem;
+  background: color-mix(in srgb, var(--viewport-panel) 86%, #ffffff 14%);
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+
+.featureCard:hover {
+  border-color: color-mix(in srgb, var(--viewport-line) 52%, var(--viewport-accent) 48%);
+  transform: translateY(-1px);
+}
+
+.featureCard h3 {
+  margin: 0 0 0.55rem;
+  font-size: 1.05rem;
+}
+
+.cta {
+  border: 1px solid var(--viewport-line);
+  border-radius: calc(var(--viewport-radius) + 2px);
+  background:
+    linear-gradient(
+      110deg,
+      color-mix(in srgb, var(--viewport-accent) 16%, #ffffff 84%) 0%,
+      color-mix(in srgb, var(--accent-strong) 14%, #ffffff 86%) 100%
+    );
+  padding: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cta button {
+  border: none;
+  border-radius: 12px;
+  background:
+    linear-gradient(
+      130deg,
+      color-mix(in srgb, var(--viewport-accent) 78%, #ffffff 22%) 0%,
+      var(--viewport-accent) 56%,
+      var(--accent-strong) 100%
+    );
+  color: #f8fbff;
+  font-weight: 600;
+  min-height: 42px;
+  padding: 0.65rem 1rem;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .metrics,
+  .featureGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .main {
+    padding: 1.3rem 1rem 1.8rem;
+    gap: 1.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero,
+  .actions button,
+  .actions a,
+  .featureCard {
+    animation: none;
+    transition: none;
+  }
+}

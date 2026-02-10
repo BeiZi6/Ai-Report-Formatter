@@ -1,0 +1,146 @@
+.folderHost {
+  display: inline-flex;
+  transform-origin: left top;
+}
+
+.folderButton {
+  --folder-color: #5227ff;
+  --folder-back-color: #4b24ea;
+  --paper-1: #e6e6e6;
+  --paper-2: #f2f2f2;
+  --paper-3: #ffffff;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+  padding: 0;
+  transition: all 0.2s ease-in;
+}
+
+.folderButton:not(.open):hover {
+  transform: translateY(-8px);
+}
+
+.folderButton:not(.open):hover .paper {
+  transform: translate(-50%, 0%);
+}
+
+.folderButton:not(.open):hover .folderFront {
+  transform: skew(15deg) scaleY(0.6);
+}
+
+.folderButton:not(.open):hover .right {
+  transform: skew(-15deg) scaleY(0.6);
+}
+
+.open {
+  transform: translateY(-8px);
+}
+
+.open .paper1 {
+  transform: translate(-120%, -70%) rotate(-15deg);
+}
+
+.open .paper2 {
+  transform: translate(10%, -70%) rotate(15deg);
+  height: 80%;
+}
+
+.open .paper3 {
+  transform: translate(-50%, -100%) rotate(5deg);
+  height: 80%;
+}
+
+.open .folderFront {
+  transform: skew(15deg) scaleY(0.6);
+}
+
+.open .right {
+  transform: skew(-15deg) scaleY(0.6);
+}
+
+.folderBack {
+  position: relative;
+  display: block;
+  width: 100px;
+  height: 80px;
+  background: var(--folder-back-color);
+  border-radius: 0 10px 10px 10px;
+}
+
+.folderBack::after {
+  position: absolute;
+  z-index: 0;
+  bottom: 98%;
+  left: 0;
+  content: "";
+  width: 30px;
+  height: 10px;
+  background: var(--folder-back-color);
+  border-radius: 5px 5px 0 0;
+}
+
+.paper {
+  position: absolute;
+  z-index: 2;
+  bottom: 10%;
+  left: 50%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  overflow: hidden;
+  width: 70%;
+  height: 80%;
+  padding: 0.3rem 0.38rem;
+  border-radius: 10px;
+  background: var(--paper-1);
+  transform: translate(-50%, 10%);
+  transition: all 0.3s ease-in-out;
+}
+
+.paper1 {
+  background: var(--paper-1);
+}
+
+.paper2 {
+  width: 80%;
+  height: 70%;
+  background: var(--paper-2);
+}
+
+.paper3 {
+  width: 90%;
+  height: 60%;
+  background: var(--paper-3);
+}
+
+.folderFront {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  border-radius: 5px 10px 10px 10px;
+  background: var(--folder-color);
+  transform-origin: bottom;
+  transition: all 0.3s ease-in-out;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.44);
+}
+
+.folderButton:focus-visible {
+  outline: 2px dashed var(--folder-color);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .folderButton,
+  .paper,
+  .folderFront {
+    transition: none;
+  }
+
+  .folderButton:not(.open):hover {
+    transform: none;
+  }
+}

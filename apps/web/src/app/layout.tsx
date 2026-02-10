@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,9 +20,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" data-theme="dopamine">
       <body>
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
