@@ -7,13 +7,25 @@ if (!scriptPath) {
   process.exit(2);
 }
 
+const configuredPython = (() => {
+  const root = process.env.pythonLocation;
+  if (!root) {
+    return null;
+  }
+
+  return process.platform === 'win32' ? `${root}\\python.exe` : `${root}/python`;
+})();
+
 const candidates = process.platform === 'win32'
   ? [
-      ['py', ['-3']],
+      ...(configuredPython ? [[configuredPython, []]] : []),
       ['python', []],
       ['python3', []],
+      ['py', ['-3.11']],
+      ['py', ['-3']],
     ]
   : [
+      ...(configuredPython ? [[configuredPython, []]] : []),
       ['python3', []],
       ['python', []],
     ];
