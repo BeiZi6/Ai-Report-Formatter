@@ -11,6 +11,7 @@ def run(text, **overrides):
         "superscript": False,
         "subscript": False,
         "code": False,
+        "link": False,
     }
     base.update(overrides)
     return base
@@ -144,3 +145,56 @@ def test_parse_markdown_table_alignment():
     assert table["align"] == ["left", "right"]
     assert table["header"][0]["text"] == "列1"
     assert table["rows"][0][1]["text"] == "B"
+
+
+def test_parse_markdown_task_lists_capture_checkbox_state():
+    ast = parse_markdown("- [x] done\n- [ ] todo")
+    list_node = ast[0]
+    first = list_node["items"][0][0]
+    second = list_node["items"][1][0]
+
+    assert first["task"] is True
+    assert first["checked"] is True
+    assert first["text"] == "done"
+
+    assert second["task"] is True
+    assert second["checked"] is False
+    assert second["text"] == "todo"
+
+
+def test_parse_markdown_links_append_target_url():
+    ast = parse_markdown("Read [Docs](https://example.com) now")
+    paragraph = ast[0]
+
+    assert paragraph["text"] == "Read Docs (https://example.com) now"
+
+
+def test_parse_markdown_blockquote_is_preserved():
+    ast = parse_markdown("> quoted line")
+    assert ast == [
+        {
+            "type": "blockquote",
+            "children": [
+                {
+                    "type": "paragraph",
+                    "text": "quoted line",
+                    "runs": [run("quoted line")],
+                }
+            ],
+        }
+    ]
+
+
+def test_parse_markdown_footnotes_append_footnote_section():
+    ast = parse_markdown("正文[^1]\n\n[^1]: 脚注内容")
+
+    assert ast[0]["type"] == "paragraph"
+    assert ast[0]["text"] == "正文[1]"
+    assert ast[-2] == {
+        "type": "heading",
+        "level": 1,
+        "text": "脚注",
+        "runs": [run("脚注")],
+    }
+    assert ast[-1]["type"] == "paragraph"
+    assert ast[-1]["text"] == "[1] 脚注内容"
