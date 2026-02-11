@@ -1,6 +1,6 @@
 {
   "name": "web",
-  "version": "0.1.0",
+  "version": "0.1.11",
   "description": "离线 AI 报告排版桌面应用，支持将 Markdown 转换为 Word 文档",
   "author": "Xyu <hitxyshan@163.com>",
   "repository": {
