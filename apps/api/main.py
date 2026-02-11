@@ -2,17 +2,59 @@ from __future__ import annotations
 
 import io
 import os
+from importlib import import_module
+from typing import Any, Callable
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
-from formatter.app_logic import build_preview_payload
-from formatter.docx_builder import build_docx
-from formatter.ui_config import build_format_config
-
 from .export_stats import get_export_stats, increment_export_count
 from .schemas import GenerateRequest, PreviewRequest
+
+_build_preview_payload: Callable[..., Any] | None = None
+_build_docx: Callable[..., Any] | None = None
+_build_format_config: Callable[..., Any] | None = None
+
+
+def _ensure_formatter_loaded() -> None:
+    global _build_preview_payload, _build_docx, _build_format_config
+
+    if (
+        _build_preview_payload is not None
+        and _build_docx is not None
+        and _build_format_config is not None
+    ):
+        return
+
+    app_logic = import_module("formatter.app_logic")
+    docx_builder = import_module("formatter.docx_builder")
+    ui_config = import_module("formatter.ui_config")
+
+    _build_preview_payload = getattr(app_logic, "build_preview_payload")
+    _build_docx = getattr(docx_builder, "build_docx")
+    _build_format_config = getattr(ui_config, "build_format_config")
+
+
+def build_preview_payload(*args: Any, **kwargs: Any) -> Any:
+    _ensure_formatter_loaded()
+    if _build_preview_payload is None:
+        raise RuntimeError("formatter.app_logic.build_preview_payload is unavailable")
+    return _build_preview_payload(*args, **kwargs)
+
+
+def build_docx(*args: Any, **kwargs: Any) -> Any:
+    _ensure_formatter_loaded()
+    if _build_docx is None:
+        raise RuntimeError("formatter.docx_builder.build_docx is unavailable")
+    return _build_docx(*args, **kwargs)
+
+
+def build_format_config(*args: Any, **kwargs: Any) -> Any:
+    _ensure_formatter_loaded()
+    if _build_format_config is None:
+        raise RuntimeError("formatter.ui_config.build_format_config is unavailable")
+    return _build_format_config(*args, **kwargs)
 
 app = FastAPI()
 
