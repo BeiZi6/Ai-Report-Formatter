@@ -24,7 +24,8 @@
     "build:backend": "node electron/scripts/build-rust-backend.mjs",
     "build:desktop": "npm run build:backend && npm run build && electron-builder",
     "pack:desktop": "npm run build:backend && npm run build && electron-builder --dir",
-    "release:desktop": "npm run build:backend && npm run build && electron-builder --publish always"
+    "release:desktop": "npm run build:backend && npm run build && electron-builder --publish always",
+    "build:desktop:local": "npm run build:backend && npm run build && electron-builder --publish never"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
