@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("renders primary desktop formatter controls", async ({ page }) => {
-	await page.goto("/");
+	await page.goto("/", { waitUntil: "domcontentloaded" });
 
 	await expect(page.getByRole("heading", { name: "AI 报告排版助手" })).toBeVisible();
 	await expect(page.getByLabel("Markdown 输入")).toBeVisible();
@@ -9,7 +9,7 @@ test("renders primary desktop formatter controls", async ({ page }) => {
 });
 
 test("enables export action after markdown input", async ({ page }) => {
-	await page.goto("/");
+	await page.goto("/", { waitUntil: "domcontentloaded" });
 
 	await page.getByLabel("Markdown 输入").fill("# 测试标题\n\n这是测试段落。");
 	await expect(page.getByTestId("btn-generate")).toBeEnabled();
@@ -20,14 +20,14 @@ test("enables export action after markdown input", async ({ page }) => {
 });
 
 test("shows runtime log export action in web mode", async ({ page }) => {
-	await page.goto("/");
+	await page.goto("/", { waitUntil: "domcontentloaded" });
 
 	await expect(page.getByTestId("btn-export-logs")).toBeVisible();
 	await expect(page.getByTestId("btn-export-logs")).toBeDisabled();
 });
 
 test("renders react-bits enhanced text accents", async ({ page }) => {
-	await page.goto("/");
+	await page.goto("/", { waitUntil: "domcontentloaded" });
 
 	await expect(page.getByTestId("rb-hero-shiny")).toBeVisible();
 	await expect(page.getByTestId("rb-status-decrypt")).toBeVisible();
@@ -54,7 +54,7 @@ test("renders react-bits enhanced text accents", async ({ page }) => {
 });
 
 test("switches visual theme from selector", async ({ page }) => {
-	await page.goto("/");
+	await page.goto("/", { waitUntil: "domcontentloaded" });
 
 	const selector = page.getByTestId("theme-select");
 	await expect(selector).toBeVisible();

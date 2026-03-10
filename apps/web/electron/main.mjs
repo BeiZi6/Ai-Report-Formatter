@@ -13,6 +13,7 @@ import {
 	getBackendExecutablePath,
 	getBackendReadinessConfig,
 	getBackendReadyEndpoint,
+	probeBackendReady,
 	shouldLaunchBundledBackend,
 } from "./backend.mjs";
 import { getRendererUrl, getSplashUrl } from "./paths.mjs";
@@ -222,13 +223,9 @@ function configurePermissionHandlers() {
 
 async function waitForBundledBackendReady({ endpoint, onProgress }) {
 	for (let attempt = 0; attempt < BACKEND_READINESS.attempts; attempt += 1) {
-		try {
-			const response = await fetch(endpoint);
-			if (response.ok) {
-				return true;
-			}
-		} catch {
-			// keep polling until timeout
+		const isReady = await probeBackendReady({ endpoint });
+		if (isReady) {
+			return true;
 		}
 
 		onProgress?.(attempt + 1, BACKEND_READINESS.attempts);
@@ -247,7 +244,7 @@ function stopBundledBackend() {
 	backendProcess.kill();
 }
 
-function startBundledBackend({ host, port }) {
+function startBundledBackend({ host, port, exportDbPath }) {
 	const backendExecutable = getBackendExecutablePath({
 		isPackaged: app.isPackaged,
 		platform: process.platform,
@@ -262,7 +259,7 @@ function startBundledBackend({ host, port }) {
 	}
 
 	backendProcess = spawn(backendExecutable, [], {
-		env: buildBackendEnv(process.env, { host, port }),
+		env: buildBackendEnv(process.env, { host, port, exportDbPath }),
 		stdio: app.isPackaged ? "ignore" : "inherit",
 		windowsHide: true,
 	});
@@ -420,6 +417,7 @@ app.whenReady().then(async () => {
 	const splashWindow = launchBundledBackend ? createSplashWindow() : null;
 
 	if (launchBundledBackend) {
+		const exportDbPath = path.join(app.getPath("userData"), "backend", "export_counts.db");
 		updateBackendStartupStatus({
 			phase: "starting",
 			progress: 5,
@@ -446,6 +444,7 @@ app.whenReady().then(async () => {
 				message: "Desktop backend endpoint configured",
 				context: {
 					baseUrl: desktopApiBaseUrl,
+					exportDbPath,
 					readyEndpoint: backendReadyEndpoint,
 				},
 			});
@@ -459,6 +458,7 @@ app.whenReady().then(async () => {
 			startBundledBackend({
 				host: DESKTOP_API_HOST,
 				port: String(backendPort),
+				exportDbPath,
 			});
 
 			let lastProgress = 30;
@@ -527,10 +527,59 @@ app.whenReady().then(async () => {
 		}
 	} else {
 		updateBackendStartupStatus({
-			phase: "ready",
-			progress: 100,
-			message: "本地服务已就绪",
+			phase: "starting",
+			progress: 8,
+			message: "正在检查开发后端...",
 		});
+
+		let lastProgress = 8;
+		void waitForBundledBackendReady({
+			endpoint: backendReadyEndpoint,
+			onProgress: (attempt, total) => {
+				const ratio = total > 0 ? attempt / total : 0;
+				const nextProgress = Math.min(95, 8 + Math.round(ratio * 87));
+				if (nextProgress <= lastProgress) {
+					return;
+				}
+
+				lastProgress = nextProgress;
+				updateBackendStartupStatus({
+					phase: "starting",
+					progress: nextProgress,
+					message: "正在等待开发后端就绪...",
+				});
+			},
+		})
+			.then((isReady) => {
+				if (isReady) {
+					updateBackendStartupStatus({
+						phase: "ready",
+						progress: 100,
+						message: "开发后端已就绪",
+					});
+					return;
+				}
+
+				updateBackendStartupStatus({
+					phase: "error",
+					progress: 100,
+					message: "未检测到开发后端，请先启动 API 服务",
+				});
+
+				appendRuntimeLog({
+					level: "warn",
+					message: "Development backend readiness check timed out",
+					context: { endpoint: backendReadyEndpoint },
+				});
+			})
+			.catch((error) => {
+				updateBackendStartupStatus({
+					phase: "error",
+					progress: 100,
+					message: "开发后端检查失败",
+				});
+				reportRuntimeError("Development backend readiness check failed", error);
+			});
 	}
 
 	createWindow({ splashWindow });

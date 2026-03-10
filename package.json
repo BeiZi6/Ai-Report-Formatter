@@ -1,4 +1,18 @@
 {
+  "scripts": {
+    "dev": "npm --prefix apps/web run dev:desktop",
+    "dev:legacy-desktop": "npm run dev",
+    "dev:rust": "cargo run --manifest-path apps/rust-desktop/Cargo.toml",
+    "dev:rust-ui": "npm run dev:rust",
+    "dev:tauri": "cd apps/tauri-desktop/src-tauri && cargo tauri dev",
+    "dev:web": "npm --prefix apps/web run dev",
+    "dev:api": "cargo run --manifest-path apps/rust-api/Cargo.toml --bin rust-api",
+    "test": "cargo test --manifest-path apps/rust-api/Cargo.toml && cargo check --manifest-path apps/rust-desktop/Cargo.toml && cargo check --manifest-path apps/tauri-desktop/src-tauri/Cargo.toml && npm --prefix apps/web run test:electron",
+    "check:tauri": "cargo check --manifest-path apps/tauri-desktop/src-tauri/Cargo.toml",
+    "build:tauri": "cd apps/tauri-desktop/src-tauri && cargo tauri build",
+    "build:web": "npm --prefix apps/web run build",
+    "build:desktop": "npm --prefix apps/web run build:desktop"
+  },
   "devDependencies": {
     "remotion": "^4.0.417"
   }

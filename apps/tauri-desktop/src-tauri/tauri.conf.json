@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AI Report Formatter",
+  "version": "0.1.0",
+  "identifier": "com.proj1.reportformatter.tauri",
+  "build": {
+    "beforeDevCommand": {
+      "script": "npm run dev",
+      "cwd": "../../web",
+      "wait": false
+    },
+    "beforeBuildCommand": {
+      "script": "npm run build",
+      "cwd": "../../web",
+      "wait": true
+    },
+    "devUrl": "http://localhost:3000",
+    "frontendDist": "../../web/out"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "AI Report Formatter",
+        "width": 1320,
+        "height": 860,
+        "resizable": true
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "resources": [
+      "binaries"
+    ],
+    "icon": [
+      "../../web/electron/assets/icons/icon.png",
+      "../../web/electron/assets/icons/icon.ico",
+      "../../web/electron/assets/icons/icon.icns"
+    ]
+  }
+}

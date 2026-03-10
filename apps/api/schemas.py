@@ -2,23 +2,21 @@ from __future__ import annotations
 
 from typing import Any, Dict, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class BibliographyConfig(BaseModel):
     style: Literal["ieee", "gbt", "apa"] = "ieee"
     sources_text: str = ""
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class PreviewRequest(BaseModel):
     markdown: str = ""
     bibliography: BibliographyConfig = Field(default_factory=lambda: BibliographyConfig())
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class GenerateConfig(BaseModel):
@@ -46,8 +44,7 @@ class GenerateConfig(BaseModel):
     figure_max_width_cm: float = 14.0
     figure_align: Literal["left", "center", "right"] = "center"
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class GenerateRequest(BaseModel):
@@ -55,8 +52,7 @@ class GenerateRequest(BaseModel):
     config: Dict[str, Any] | GenerateConfig = Field(default_factory=lambda: GenerateConfig())
     bibliography: BibliographyConfig = Field(default_factory=lambda: BibliographyConfig())
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
     def model_post_init(self, __context: Any) -> None:
         # Allow config as plain dict; coerce into GenerateConfig for downstream typing

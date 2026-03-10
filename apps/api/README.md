@@ -1,4 +1,6 @@
-# API (FastAPI)
+# API (FastAPI Legacy Compatibility)
+
+> This module is retained for compatibility only. The primary backend is now `apps/rust-api`.
 
 ## Install
 
@@ -14,13 +16,13 @@ uvicorn main:app --reload --port 8000
 
 ## Desktop backend entrypoint
 
-Run the desktop API entrypoint (used by Electron dev mode):
+Run the legacy desktop API entrypoint:
 
 ```bash
 python3 desktop_backend.py
 ```
 
-Build a bundled desktop backend executable (used by Electron packaging):
+Build a legacy desktop backend executable:
 
 ```bash
 python3 -m pip install -r requirements-desktop.txt
@@ -31,8 +33,10 @@ python3 scripts/build_desktop_backend.py
 
 ## Endpoints
 
+- `GET /healthz`
 - `POST /api/preview`
 - `POST /api/generate`
+- `GET /api/exports/stats`
 
 ## Notes
 

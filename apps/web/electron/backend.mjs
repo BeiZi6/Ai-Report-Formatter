@@ -30,13 +30,22 @@ export function buildBackendBaseUrl({
 export function buildBackendEnv(baseEnv, {
   host = DESKTOP_API_HOST,
   port = DESKTOP_API_PORT,
+  exportDbPath,
 } = {}) {
-  return {
+  const env = {
     ...baseEnv,
     DESKTOP_API_HOST: host,
     DESKTOP_API_PORT: port,
+    API_HOST: host,
+    API_PORT: port,
     API_CORS_EXTRA_ORIGINS: 'null',
   };
+
+  if (exportDbPath) {
+    env.EXPORT_DB_PATH = exportDbPath;
+  }
+
+  return env;
 }
 
 export function shouldLaunchBundledBackend({ isPackaged }) {
@@ -55,4 +64,13 @@ export function getBackendReadinessConfig() {
     attempts: BACKEND_READY_ATTEMPTS,
     intervalMs: BACKEND_READY_INTERVAL_MS,
   };
+}
+
+export async function probeBackendReady({ endpoint, fetchImpl = fetch }) {
+  try {
+    const response = await fetchImpl(endpoint);
+    return response.ok;
+  } catch {
+    return false;
+  }
 }

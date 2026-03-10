@@ -7,7 +7,7 @@ This document describes how AI Report Formatter handles user data.
 ## 1. Data Processing Scope
 
 - The desktop app processes Markdown and generated DOCX content locally on the user device.
-- The bundled FastAPI backend runs on `127.0.0.1` and is only used by the local app process.
+- The bundled Rust API backend runs on `127.0.0.1` and is only used by the local app process.
 - By default, document content is not uploaded to external services by the desktop workflow.
 
 ## 2. Diagnostic Logs
@@ -28,7 +28,7 @@ This document describes how AI Report Formatter handles user data.
 
 ## 5. Third-Party Components
 
-- The application depends on open-source libraries (Electron, Next.js, FastAPI, and others).
+- The application depends on open-source libraries (Electron, Next.js, Axum, and others).
 - Third-party licenses and obligations apply according to each dependency license.
 
 ## 6. User Rights

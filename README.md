@@ -33,26 +33,35 @@ Release 页面：`https://github.com/BeiZi6/Ai-Report-Formatter/releases`
 ### 环境要求
 
 - Node.js 20+
-- Python 3.9+
+- Rust 1.79+
 
 ### 安装依赖
 
 ```bash
-python3 -m pip install -r apps/api/requirements.txt
 cd apps/web
 npm install
 ```
 
-桌面联调/打包需要额外依赖：
+### 一键启动桌面程序（推荐）
+
+在仓库根目录执行：
 
 ```bash
-python3 -m pip install -r apps/api/requirements-desktop.txt
+npm run dev
+```
+
+该命令会启动原有 UI（Next.js + Electron）并接入 Rust API。
+
+### 启动全 Rust 原生前端（可选）
+
+```bash
+npm run dev:rust
 ```
 
 ### 启动 API
 
 ```bash
-uvicorn main:app --reload --port 8000 --app-dir apps/api
+cargo run --manifest-path apps/rust-api/Cargo.toml --bin rust-api
 ```
 
 ### 启动 Web
@@ -62,7 +71,7 @@ cd apps/web
 NEXT_PUBLIC_API_BASE=http://localhost:8000 npm run dev
 ```
 
-### 启动桌面联调（Web + API + Electron）
+### 启动桌面联调（Web + Rust API + Electron）
 
 ```bash
 cd apps/web
@@ -72,8 +81,11 @@ npm run dev:desktop
 ## 常用命令
 
 ```bash
-# Python tests（仓库根目录）
-pytest tests
+# Full stack tests（仓库根目录）
+npm run test
+
+# Rust API tests
+cargo test --manifest-path apps/rust-api/Cargo.toml
 
 # Electron backend tests
 cd apps/web
@@ -99,7 +111,8 @@ npm run pack:desktop
 ## 仓库结构
 
 - `apps/web`：Next.js + Electron 桌面应用（主入口）
-- `apps/api`：FastAPI 接口层（预览、导出、统计）
+- `apps/rust-api`：Rust API（Axum，主后端）
+- `apps/api`：FastAPI 兼容层（遗留）
 - `apps/formatter`：Markdown 解析与 DOCX 生成核心
 - `tests`：API/formatter/Electron 相关测试
 - `docs`：格式说明、隐私政策、EULA、计划文档

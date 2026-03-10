@@ -261,20 +261,34 @@ textarea {
 }
 
 .theme-selector {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  padding: 0.2rem;
+  min-height: 36px;
+  padding: 0.16rem 0.42rem 0.16rem 0.58rem;
   border: 1px solid var(--border-soft);
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent-wash) 72%, #ffffff 28%);
 }
 
+.theme-selector::after {
+  content: "▾";
+  pointer-events: none;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-left: 0.2rem;
+}
+
 .theme-selector select {
-  min-height: 32px;
-  border: 1px solid var(--border-soft);
-  border-radius: 999px;
-  padding: 0.25rem 1.8rem 0.25rem 0.9rem;
-  background: rgba(255, 255, 255, 0.9);
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 30px;
+  width: 100%;
+  border: 0;
+  border-radius: inherit;
+  padding: 0.24rem 0.2rem 0.24rem 0;
+  background: transparent;
+  box-shadow: none;
   color: var(--text-primary);
   font-size: 0.8rem;
   font-weight: 600;
@@ -282,7 +296,7 @@ textarea {
 
 .theme-selector select:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .wave-actions .primary-btn:disabled {
@@ -1440,8 +1454,7 @@ html[data-theme="midnight"] .value-card-body {
 
 html[data-theme="midnight"] .field textarea,
 html[data-theme="midnight"] .field select,
-html[data-theme="midnight"] .field input,
-html[data-theme="midnight"] .theme-selector select {
+html[data-theme="midnight"] .field input {
   background: rgba(9, 15, 26, 0.92);
   border-color: rgba(92, 113, 153, 0.6);
   color: #eaf2ff;
@@ -1567,8 +1580,7 @@ html[data-theme="retro"] .value-card-body {
 
 html[data-theme="retro"] .field textarea,
 html[data-theme="retro"] .field select,
-html[data-theme="retro"] .field input,
-html[data-theme="retro"] .theme-selector select {
+html[data-theme="retro"] .field input {
   background: #ffffff;
   border-color: #1f1f1f;
   color: #0f0f0f;
@@ -1734,8 +1746,7 @@ html[data-theme="sunset"] .theme-selector {
 
 html[data-theme="sunset"] .field textarea,
 html[data-theme="sunset"] .field select,
-html[data-theme="sunset"] .field input,
-html[data-theme="sunset"] .theme-selector select {
+html[data-theme="sunset"] .field input {
   background: rgba(255, 255, 255, 0.9);
   border-color: rgba(163, 66, 84, 0.54);
   color: #3d1d2d;
@@ -1825,8 +1836,7 @@ html[data-theme="ocean"] .theme-selector {
 
 html[data-theme="ocean"] .field textarea,
 html[data-theme="ocean"] .field select,
-html[data-theme="ocean"] .field input,
-html[data-theme="ocean"] .theme-selector select {
+html[data-theme="ocean"] .field input {
   background: rgba(255, 255, 255, 0.92);
   border-color: rgba(47, 115, 148, 0.52);
   color: #11314a;
@@ -1941,8 +1951,7 @@ html[data-theme="ember"] .value-card-body {
 
 html[data-theme="ember"] .field textarea,
 html[data-theme="ember"] .field select,
-html[data-theme="ember"] .field input,
-html[data-theme="ember"] .theme-selector select {
+html[data-theme="ember"] .field input {
   background: rgba(9, 11, 16, 0.94);
   border-color: rgba(77, 92, 122, 0.6);
   color: #f5f2ed;
@@ -2035,8 +2044,7 @@ html[data-theme="jade"] .theme-selector {
 
 html[data-theme="jade"] .field textarea,
 html[data-theme="jade"] .field select,
-html[data-theme="jade"] .field input,
-html[data-theme="jade"] .theme-selector select {
+html[data-theme="jade"] .field input {
   background: rgba(255, 255, 255, 0.92);
   border-color: rgba(43, 126, 107, 0.52);
   color: #0f3b31;
@@ -2158,8 +2166,7 @@ html[data-theme="graphite"] .value-card-body {
 
 html[data-theme="graphite"] .field textarea,
 html[data-theme="graphite"] .field select,
-html[data-theme="graphite"] .field input,
-html[data-theme="graphite"] .theme-selector select {
+html[data-theme="graphite"] .field input {
   background: rgba(9, 15, 26, 0.92);
   border-color: rgba(92, 113, 153, 0.6);
   color: #eaf2ff;
@@ -2266,8 +2273,7 @@ html[data-theme="mono"] .page-footer {
 
 html[data-theme="mono"] .field textarea,
 html[data-theme="mono"] .field select,
-html[data-theme="mono"] .field input,
-html[data-theme="mono"] .theme-selector select {
+html[data-theme="mono"] .field input {
   background: #ffffff;
   border-color: #2a2a2a;
   color: #111111;
@@ -2399,8 +2405,7 @@ html[data-theme="mono"] .page[data-ui-glass="fluid"] {
 
 .page[data-ui-glass="fluid"] .field textarea,
 .page[data-ui-glass="fluid"] .field select,
-.page[data-ui-glass="fluid"] .field input,
-.page[data-ui-glass="fluid"] .theme-selector select {
+.page[data-ui-glass="fluid"] .field input {
   border: 1px solid var(--fluid-interactive-border);
   background:
     linear-gradient(165deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.06)),
@@ -2430,8 +2435,7 @@ html[data-theme="mono"] .page[data-ui-glass="fluid"] {
 
 .page[data-ui-glass="fluid"] .field textarea:focus,
 .page[data-ui-glass="fluid"] .field select:focus,
-.page[data-ui-glass="fluid"] .field input:focus,
-.page[data-ui-glass="fluid"] .theme-selector select:focus {
+.page[data-ui-glass="fluid"] .field input:focus {
   outline: 1px solid color-mix(in srgb, var(--fluid-interactive-ring) 72%, white 28%);
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--fluid-interactive-ring) 26%, transparent),
@@ -2487,13 +2491,11 @@ html[data-theme="mono"] .page[data-ui-glass="fluid"] {
 }
 
 .page[data-ui-glass="fluid"] .theme-selector select {
-  background:
-    linear-gradient(165deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.06)),
-    var(--fluid-interactive-base);
-  border: 1px solid var(--fluid-interactive-border);
+  border: 0;
+  background: transparent;
   color: var(--fluid-button-text);
-  backdrop-filter: blur(14px) saturate(150%);
-  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .page-shell .bg-squares-layer canvas[data-bg-style="dither"] {
@@ -2571,7 +2573,6 @@ html[data-theme] .meta-chip,
 html[data-theme] .chip,
 html[data-theme] .preview-badge,
 html[data-theme] .theme-selector,
-html[data-theme] .theme-selector select,
 html[data-theme] .primary-btn,
 html[data-theme] .ghost-btn {
   border-radius: var(--theme-btn-radius);
@@ -2588,8 +2589,7 @@ html[data-theme] .theme-selector {
 
 html[data-theme] .field textarea,
 html[data-theme] .field select,
-html[data-theme] .field input,
-html[data-theme] .theme-selector select {
+html[data-theme] .field input {
   background: var(--module-input-surface);
   border-color: var(--module-input-border);
   color: var(--text-primary);
@@ -2618,7 +2618,6 @@ html[data-theme] .value-card {
 .page[data-ui-glass="fluid"] .chip,
 .page[data-ui-glass="fluid"] .preview-badge,
 .page[data-ui-glass="fluid"] .theme-selector,
-.page[data-ui-glass="fluid"] .theme-selector select,
 .page[data-ui-glass="fluid"] .primary-btn,
 .page[data-ui-glass="fluid"] .ghost-btn {
   border-radius: var(--theme-btn-radius);

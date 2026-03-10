@@ -29,7 +29,6 @@ export default function GradualBlur({
 
   useEffect(() => {
     if (prefersReducedMotion) {
-      setProgress(1);
       return;
     }
 

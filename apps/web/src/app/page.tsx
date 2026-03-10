@@ -15,7 +15,7 @@ import { fetchExportStats, fetchPreview, generateDocx, type BibliographyPayload 
 
 const GlitchText = dynamic(() => import("@/components/reactbits/GlitchText"), {
   ssr: false,
-  loading: () => <span className="hero-badge-glitch">FastAPI · Next.js · Word</span>,
+  loading: () => <span className="hero-badge-glitch">Rust API · Next.js · Word</span>,
 });
 
 type PreviewPayload = {
@@ -77,9 +77,9 @@ type FormatConfig = {
   first_line_indent_chars: number;
   justify: boolean;
   clear_background: boolean;
-  page_num_position: string;
+  page_num_position: "center" | "right";
   figure_max_width_cm: number;
-  figure_align: string;
+  figure_align: "left" | "center" | "right";
 };
 
 const DEFAULT_CONFIG: FormatConfig = {
@@ -342,7 +342,8 @@ export default function Home() {
     try {
       const data = await fetchExportStats();
       setExportStats(data);
-    } catch {
+    } catch (error) {
+      console.error("Failed to fetch export stats", error);
       setExportStats(null);
     }
   }, []);
@@ -383,7 +384,8 @@ export default function Home() {
       .then((status) => {
         applyStatus(status);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("Failed to read backend startup status", error);
         if (!disposed) {
           setIsBackendReady(true);
         }
@@ -424,6 +426,7 @@ export default function Home() {
         if (err instanceof DOMException && err.name === "AbortError") {
           return;
         }
+        console.error("Preview request failed", err);
         setError("预览失败，请检查接口连接");
       } finally {
         setIsLoading(false);
@@ -571,7 +574,8 @@ export default function Home() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch {
+    } catch (error) {
+      console.error("Generate docx failed", error);
       setError("导出失败，请稍后重试");
     } finally {
       setIsGenerating(false);
@@ -600,7 +604,8 @@ export default function Home() {
       }
 
       setLogExportMessage(result.error ? `日志导出失败：${result.error}` : "日志导出失败");
-    } catch {
+    } catch (error) {
+      console.error("Export logs failed", error);
       setLogExportMessage("日志导出失败");
     }
   };
@@ -623,7 +628,8 @@ export default function Home() {
       const text = await file.text();
       setMarkdown(text);
       setImportMessage(`已导入：${file.name}`);
-    } catch {
+    } catch (error) {
+      console.error("Import markdown file failed", error);
       setImportMessage("导入失败：无法读取文件");
     }
   };
@@ -658,7 +664,8 @@ export default function Home() {
       const text = await file.text();
       setMarkdown(text);
       setImportMessage(`已导入：${file.name}`);
-    } catch {
+    } catch (error) {
+      console.error("Drop-import markdown file failed", error);
       setImportMessage("导入失败：无法读取文件");
     }
   };
@@ -694,7 +701,8 @@ export default function Home() {
       }
       setBatchMessage("批量导出任务已完成");
       refreshExportStats();
-    } catch {
+    } catch (error) {
+      console.error("Batch export failed", error);
       setBatchMessage("批量导出失败，请稍后重试");
     }
   };
@@ -745,7 +753,7 @@ export default function Home() {
       >
         <div className="hero-badge">
           <GlitchText className="hero-badge-glitch" enableOnHover speed={0.8} enableShadows={false}>
-            FastAPI · Next.js · Word
+            Rust API · Next.js · Word
           </GlitchText>
         </div>
         <BlurText
@@ -1277,12 +1285,16 @@ export default function Home() {
                     id="figure-align"
                     name="figure-align"
                     value={config.figure_align}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      if (value !== "left" && value !== "center" && value !== "right") {
+                        return;
+                      }
                       setConfig((prev) => ({
                         ...prev,
-                        figure_align: event.target.value,
-                      }))
-                    }
+                        figure_align: value,
+                      }));
+                    }}
                   >
                     <option value="left">左对齐</option>
                     <option value="center">居中</option>
@@ -1447,18 +1459,29 @@ export default function Home() {
                         ref={previewViewportRef}
                         style={{ "--preview-scale": previewScale } as CSSProperties}
                       >
-                        {(previewPages.length ? previewPages : [preview.preview_html]).map(
-                          (pageHtml) => (
-                            <div className="preview-page-shell" key={pageHtml}>
-                              <div className="preview-page">
-                                <div
-                                  className="preview-page-content"
-                                  dangerouslySetInnerHTML={{ __html: pageHtml }}
-                                />
+                        {(() => {
+                          const pageHtmlChunks = previewPages.length
+                            ? previewPages
+                            : [preview.preview_html];
+                          const duplicateCounter = new Map<string, number>();
+
+                          return pageHtmlChunks.map((pageHtml) => {
+                            const duplicateIndex = duplicateCounter.get(pageHtml) ?? 0;
+                            duplicateCounter.set(pageHtml, duplicateIndex + 1);
+                            const pageKey = `${pageHtml.slice(0, 48)}-${pageHtml.length}-${duplicateIndex}`;
+
+                            return (
+                              <div className="preview-page-shell" key={pageKey}>
+                                <div className="preview-page">
+                                  <div
+                                    className="preview-page-content"
+                                    dangerouslySetInnerHTML={{ __html: pageHtml }}
+                                  />
+                                </div>
                               </div>
-                            </div>
-                          ),
-                        )}
+                            );
+                          });
+                        })()}
                       </div>
                       <div
                         className="preview-measure"

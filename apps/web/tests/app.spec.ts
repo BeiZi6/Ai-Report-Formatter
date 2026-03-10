@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test';
 
 test('landing renders core sections', async ({ page }) => {
-  await page.goto('http://localhost:3000/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'AI 报告排版助手' })).toBeVisible();
   await expect(page.getByLabel('Markdown 输入')).toBeVisible();
   await expect(page.getByRole('button', { name: '生成 Word' })).toBeVisible();
 });
 
 test('settings panel includes paragraph spacing and indent controls', async ({ page }) => {
-  await page.goto('http://localhost:3000/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.getByLabel('标题段前')).toBeVisible();
   await expect(page.getByLabel('标题段后')).toBeVisible();
   await expect(page.getByLabel('正文段前')).toBeVisible();
@@ -20,7 +20,7 @@ test('settings panel includes paragraph spacing and indent controls', async ({ p
 });
 
 test('export note mentions auto numbering and centered tables', async ({ page }) => {
-  await page.goto('http://localhost:3000/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(
     page.getByText('表格单元格默认居中，块级公式自动按 (1) 样式编号', { exact: false }),
   ).toBeVisible();
@@ -38,7 +38,7 @@ test('preview renders inline code and centered tables', async ({ page }) => {
     });
   });
 
-  await page.goto('http://localhost:3000/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   await page.getByLabel('Markdown 输入').fill('Inline `code`');
 
   const preview = page.locator('.preview-html');
@@ -48,7 +48,7 @@ test('preview renders inline code and centered tables', async ({ page }) => {
 });
 
 test('settings panel includes image and bibliography manager controls', async ({ page }) => {
-  await page.goto('http://localhost:3000/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.getByLabel('图片宽度 (cm)')).toBeVisible();
   await expect(page.getByLabel('图片对齐')).toBeVisible();
   await expect(page.getByLabel('参考文献样式')).toBeVisible();
@@ -71,7 +71,7 @@ test('preview request includes bibliography manager payload', async ({ page }) =
     });
   });
 
-  await page.goto('http://localhost:3000/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   await page.getByLabel('Markdown 输入').fill('See [@smith2024].');
   await page.getByLabel('参考文献样式').selectOption('apa');
   await page.getByLabel('文献源管理').fill('[smith2024] Smith, J. (2024).');
@@ -104,11 +104,40 @@ test('long preview paginates into multiple pages', async ({ page }) => {
     });
   });
 
-  await page.goto('http://localhost:3000/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   await page.getByLabel('Markdown 输入').fill('长文档');
   await expect(page.locator('.preview-html')).toBeVisible();
 
   await page.waitForFunction(() => document.querySelectorAll('.preview-page').length >= 2);
   const pageCount = await page.locator('.preview-page').count();
   expect(pageCount).toBeGreaterThan(1);
+});
+
+test('preview pagination does not emit duplicate key warnings for repeated chunks', async ({ page }) => {
+  const duplicateKeyWarnings: string[] = [];
+  page.on('console', (message) => {
+    const text = message.text();
+    if (text.includes('Encountered two children with the same key')) {
+      duplicateKeyWarnings.push(text);
+    }
+  });
+
+  const repeatedChunk = `<p>${'重复内容 '.repeat(2200)}</p>`;
+
+  await page.route('**/api/preview', async (route) => {
+    await route.fulfill({
+      json: {
+        summary: { headings: 0, paragraphs: 3 },
+        refs: [],
+        preview_html: `${repeatedChunk}${repeatedChunk}${repeatedChunk}`,
+      },
+    });
+  });
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.getByLabel('Markdown 输入').fill('重复分页');
+  await page.waitForFunction(() => document.querySelectorAll('.preview-page').length >= 2);
+  await page.waitForTimeout(300);
+
+  expect(duplicateKeyWarnings).toHaveLength(0);
 });

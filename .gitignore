@@ -20,3 +20,9 @@ out/
 apps/api/.pyinstaller/
 apps/web/dist-electron/
 apps/web/electron/backend/
+.run/
+
+# Rust
+apps/rust-api/target/
+apps/rust-desktop/target/
+apps/tauri-desktop/src-tauri/target/
