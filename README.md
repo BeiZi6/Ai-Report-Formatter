@@ -10,8 +10,8 @@
 
 - **Problem:** course and lab reports must be handed in as formatted `.docx` (fonts, spacing, numbered equations, citation styles), and converting Markdown by hand is slow and error-prone.
 - **What it does:** live structured preview; academic style settings (fonts, sizes, line spacing, indentation, page numbers); inline and auto-numbered block equations; IEEE / GB/T / APA references from manual entries or BibTeX; batch export of `---`-separated documents.
-- **Built with:** a Next.js + Electron desktop app over a Rust (Axum) API, with a legacy FastAPI layer kept for compatibility. Rust API, Electron and Playwright end-to-end tests; GitHub Actions release pipelines; exportable runtime logs for troubleshooting.
-- **Status:** v0.1.11 installers on [Releases](https://github.com/BeiZi6/Ai-Report-Formatter/releases) for macOS (arm64), Windows (x64 / ia32 / arm64) and Linux (x64 / arm64). A Tauri build and a native Rust front end are in development.
+- **Built with:** a Next.js + Electron desktop app. `main` runs on a Rust (Axum) API and keeps a legacy FastAPI layer for compatibility. It has Rust API, Electron backend and Playwright end-to-end tests, and ships through GitHub Actions release pipelines with exportable runtime logs for troubleshooting.
+- **Status:** v0.1.11 installers on [Releases](https://github.com/BeiZi6/Ai-Report-Formatter/releases) for macOS (arm64), Windows (x64 / ia32 / arm64) and Linux (x64 / arm64). These ship the earlier Python (FastAPI) backend. The Rust backend, a Tauri build and a native Rust front end are on `main` and not released yet.
 
 ## 功能特性
 
